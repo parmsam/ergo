@@ -1,4 +1,4 @@
-import { playNow } from '../core/audio';
+import { canRingWhenSilenced, playNow } from '../core/audio';
 import { notify, notifyGranted, notifySupported, requestNotify } from '../core/notify';
 import { BODY_RULES, EYE_RULES } from '../core/rules';
 import { exportBackup, parseBackup } from '../core/storage';
@@ -56,6 +56,13 @@ export function renderSettings(app: AppCtx) {
       <div class="form">
         ${field('Sound', 'Soft chimes when a break starts and ends', sw('sound', s.sound))}
         ${field('Volume', '', `<span style="display:flex;gap:8px;align-items:center"><input type="range" min="0.1" max="1" step="0.05" data-range="volume" value="${s.volume}"/><button class="btn sm ghost" data-act="test-sound">Test</button></span>`)}
+        ${field(
+          'Ring when iPhone is silenced',
+          canRingWhenSilenced()
+            ? 'Chimes play even with the silent switch on. ergo switches audio mode only for each chime, which may briefly pause music.'
+            : 'For iPhone and iPad (Safari, iOS 17 or later). Not available in this browser.',
+          sw('ringWhenSilenced', s.ringWhenSilenced),
+        )}
         ${field('System notifications', `So you see breaks while working in other apps. Status: ${perm}`, `<span style="display:flex;gap:8px;align-items:center">${notifyGranted() ? `<button class="btn sm ghost" data-act="test-notify">Test</button>` : `<button class="btn sm" data-act="allow-notify" ${notifySupported() ? '' : 'disabled'}>${icons.bell}Allow</button>`}${sw('notify', s.notify)}</span>`)}
       </div>
     </div>

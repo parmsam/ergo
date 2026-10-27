@@ -48,6 +48,8 @@ export interface Settings {
   nudges: Record<NudgeId, { on: boolean; everyMin: number }>;
   sound: boolean;
   volume: number;
+  /** iPhone/iPad: play chimes even with the silent switch on (Safari's Audio Session API). */
+  ringWhenSilenced: boolean;
   notify: boolean;
   /** Count a break as done when it runs out without being skipped (you may be looking away, not clicking). */
   trustBreaks: boolean;

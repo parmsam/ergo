@@ -16,6 +16,7 @@ export const DEFAULT_SETTINGS: Settings = {
   },
   sound: true,
   volume: 0.6,
+  ringWhenSilenced: true,
   notify: true,
   trustBreaks: true,
   bodyResetsEye: true,

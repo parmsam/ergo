@@ -45,6 +45,11 @@ Inspired by [pomotimer2](https://github.com/parmsam/pomotimer2) (stack, PWA appr
 - [x] Page icons in the header (top right), replacing the floating bottom bar
 - [x] Mobile layout: stacked settings rows, scrollable table, root overflow clip
 
+## v0.5.0 ✅
+
+- [x] Chimes ring through the iPhone silent switch (Audio Session API, held only around each chime)
+- [ ] Confirm on a real iPhone: silent switch on, ergo open, a break chime plays
+
 ## Next
 
 - [ ] **Work hours schedule:** auto-start and stop on chosen days and times
@@ -79,6 +84,7 @@ Inspired by [pomotimer2](https://github.com/parmsam/pomotimer2) (stack, PWA appr
 - 2026-10-27 (v0.2.0): **No invented numbers.** Intervals and thresholds need a source and must make physiological sense; unavoidable defaults are labelled as defaults. The blink nudge (every 10 min) was removed under this rule, since people normally blink 15–20 times a minute.
 - 2026-10-27 (v0.2.0): Sitting is estimated as running time minus body breaks and confirmed standing. It undercounts sitting away from the computer, and the UI says so.
 - 2026-10-27 (v0.2.0): Exercise snacks are off by default and kept out of the ergo score; the evidence is observational, and vigorous effort isn't for everyone.
+- 2026-10-27 (v0.5.0): Silent-switch audio follows pomotimer2: "playback" session only around each chime (2.5 s before to 2.5 s after), then "auto", so music isn't paused for the whole workday. Switching happens on the tick loop, which runs whenever ergo is on screen; iOS suspends it in the background anyway.
 - 2026-10-27 (v0.3.0): Eye movement exercises are offered only as one optional step in eye breaks, labelled Mixed evidence. No dedicated reminder, and no claims about vision correction.
 - 2026-10-27 (v0.2.0): Linux WebKit e2e runs with reduced motion; continuous animations plus slow CI rendering kept elements from settling.
 

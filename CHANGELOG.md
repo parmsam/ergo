@@ -2,6 +2,14 @@
 
 All notable changes to ergo. Versions follow [semver](https://semver.org); the version in `package.json` is shown in the app header and in Settings → About.
 
+## [0.5.0] - 2026-10-27
+
+### Added
+- **Ring when iPhone is silenced** (on by default). On iPhone and iPad (Safari, iOS 17+), chimes now play even with the silent switch on, using Safari's Audio Session API. ergo switches to "playback" only from just before each chime until just after, then hands audio back, because holding playback mode can pause other audio such as music.
+
+### Notes
+- iOS still suspends web apps in the background, so chimes only play while ergo is open on screen. System notification sounds follow iOS's own silent and Focus settings; a web app can't override them.
+
 ## [0.4.0] - 2026-10-27
 
 ### Added

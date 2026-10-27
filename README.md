@@ -98,7 +98,10 @@ ergo is a habit tool, **not medical advice**.
 
 - **Desktop Chrome/Edge:** best experience. Notifications with action buttons, and reliable background timing.
 - **Safari (macOS):** works. Notifications need permission, and ergo must stay open in a tab or as an installed app.
-- **iPhone/iPad:** add to Home Screen for notifications (iOS 16.4+). iOS suspends background web apps, so reminders only fire while ergo is open.
+- **iPhone/iPad:**
+  - **Silent switch:** chimes ring even with the switch on (Safari, iOS 17+; Settings → "Ring when iPhone is silenced").
+  - **Background:** iOS suspends web apps in the background, so chimes and breaks only fire while ergo is open on screen.
+  - **Notifications:** need ergo added to the Home Screen (iOS 16.4+), and their sound follows iOS's silent and Focus settings.
 
 ## Development
 

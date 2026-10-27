@@ -146,3 +146,21 @@ test('no page is wider than the screen', async ({ page }) => {
     expect(wide, `${view} has elements past the right edge`).toBe(0);
   }
 });
+
+test('chimes switch the audio session to playback (iPhone silent switch) and back', async ({ page }) => {
+  // Stand-in for Safari's navigator.audioSession, recording every type the app sets.
+  await page.addInitScript(() => {
+    const seen: string[] = [];
+    let type = 'auto';
+    Object.defineProperty(navigator, 'audioSession', {
+      value: { get type() { return type; }, set type(v: string) { type = v; seen.push(v); } },
+    });
+    (window as unknown as { __sessionTypes: string[] }).__sessionTypes = seen;
+  });
+  await open(page, quiet, '#settings');
+  await expect(page.getByText('Chimes play even with the silent switch on')).toBeVisible();
+  await page.getByRole('button', { name: 'Test', exact: true }).first().click();
+  await expect.poll(() => page.evaluate(() => (navigator as unknown as { audioSession: { type: string } }).audioSession.type)).toBe('playback');
+  await page.clock.runFor(3000);
+  await expect.poll(() => page.evaluate(() => (navigator as unknown as { audioSession: { type: string } }).audioSession.type)).toBe('auto');
+});

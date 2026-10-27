@@ -1,5 +1,5 @@
 import './styles.css';
-import { audioReady, scheduleTones, unlockAudio, wasScheduled, playNow } from './core/audio';
+import { audioReady, playNow, scheduleTones, setRingWhenSilenced, syncSession, unlockAudio, wasScheduled } from './core/audio';
 import { coach } from './core/coach';
 import { createController, type ActiveBreak } from './core/controller';
 import { clock } from './core/format';
@@ -96,6 +96,7 @@ const ctrl = createController(store, {
     scheduleTones(events, store.get().settings.volume);
   },
   tick(now) {
+    syncSession(now);
     if (view === 'today') tickToday(viewRoot(), app, now);
     overlay.refresh(now);
     title(now);
@@ -120,6 +121,7 @@ const app: AppCtx = {
     const before = store.get().settings;
     store.update((d) => fn(d.settings), ['settings']);
     applyTheme();
+    applyAudioPrefs();
     ctrl.settingsChanged(before);
     render(false);
   },
@@ -185,6 +187,10 @@ function title(now = Date.now()) {
     const b = ctrl.stateOf('body', now);
     document.title = `👁 ${e ? clock(e.remaining) : '–'} · 🧍 ${b ? clock(b.remaining) : '–'}`;
   }
+}
+
+function applyAudioPrefs() {
+  setRingWhenSilenced(store.get().settings.ringWhenSilenced);
 }
 
 function applyTheme() {
@@ -257,6 +263,7 @@ function urlActions() {
 
 /* ---------- Boot ---------- */
 applyTheme();
+applyAudioPrefs();
 shell();
 render(true);
 window.addEventListener('hashchange', () => {

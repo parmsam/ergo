@@ -59,7 +59,10 @@ function playAt(tone: Tone, at: number, volume: number) {
 
 export function playNow(tone: Tone, volume: number) {
   unlockAudio();
+  manualUntil = Date.now() + TAIL;
+  syncSession(Date.now());
   if (ctx) playAt(tone, ctx.currentTime + 0.02, volume);
+  setTimeout(() => syncSession(Date.now()), TAIL + 100);
 }
 
 /** Replace all pending chimes with these (epoch ms). Past or far-future events are ignored. */
@@ -77,6 +80,41 @@ export function scheduleTones(events: { at: number; tone: Tone }[], volume: numb
 }
 
 export const wasScheduled = (at: number) => queuedAt.some((t) => Math.abs(t - at) < 1500);
+
+/*
+ * iPhone silent switch. Safari (iOS 17+) exposes navigator.audioSession; type "playback" plays
+ * through the silent switch, like a real timer app. It can also pause other audio (music), so
+ * ergo only holds it from just before a chime until just after, then hands back "auto".
+ */
+type AudioSession = { type: string };
+const audioSession = () => (navigator as Navigator & { audioSession?: AudioSession }).audioSession;
+export const canRingWhenSilenced = () => !!audioSession();
+
+/** Hold the playback session from LEAD ms before a chime until TAIL ms after it starts. */
+const LEAD = 2500;
+const TAIL = 2500;
+export const sessionTypeFor = (chimes: number[], now: number) =>
+  chimes.some((t) => now >= t - LEAD && now <= t + TAIL) ? 'playback' : 'auto';
+
+let ringWhenSilenced = true;
+let manualUntil = 0;
+export function setRingWhenSilenced(on: boolean) {
+  ringWhenSilenced = on;
+  syncSession(Date.now());
+}
+
+/** Called every tick: switch the session to "playback" around queued chimes, "auto" otherwise. */
+export function syncSession(now: number) {
+  const session = audioSession();
+  if (!session) return;
+  const want = ringWhenSilenced && (now < manualUntil || sessionTypeFor(queuedAt, now) === 'playback') ? 'playback' : 'auto';
+  if (session.type === want) return;
+  try {
+    session.type = want;
+  } catch {
+    /* unsupported value in this browser */
+  }
+}
 
 export function cancelTones() {
   // Keep recent entries: a chime that already played still counts as played.
