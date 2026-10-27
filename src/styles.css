@@ -82,6 +82,10 @@ body {
   margin: 0;
   min-height: 100%;
 }
+html {
+  /* iOS Safari ignores overflow on body for the viewport; clip here so nothing wide can zoom the page out. */
+  overflow-x: clip;
+}
 body {
   background: var(--bg);
   color: var(--text);
@@ -173,7 +177,7 @@ body.in-break .glow {
 .shell {
   max-width: 1080px;
   margin: 0 auto;
-  padding: max(16px, env(safe-area-inset-top)) 20px calc(96px + env(safe-area-inset-bottom));
+  padding: max(16px, env(safe-area-inset-top)) 20px calc(40px + env(safe-area-inset-bottom));
 }
 .topbar {
   display: flex;
@@ -205,6 +209,46 @@ body.in-break .glow {
 }
 .topbar .spacer {
   flex: 1;
+}
+.top-nav {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.top-link {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: var(--muted);
+  transition: background 0.25s var(--ease), color 0.25s;
+}
+.top-link:hover {
+  color: var(--text);
+}
+.top-link[aria-current='page'] {
+  background: var(--surface-2);
+  color: var(--eye);
+}
+@media (max-width: 520px) {
+  .topbar {
+    gap: 8px;
+  }
+  .topbar .ver,
+  .status-text {
+    display: none;
+  }
+  .topbar [data-bind='status'] {
+    padding: 8px;
+  }
+  .top-link {
+    width: 32px;
+    height: 32px;
+  }
 }
 .chip {
   display: inline-flex;
@@ -239,53 +283,6 @@ body.in-break .glow {
 @keyframes pulse {
   70% {
     box-shadow: 0 0 0 7px transparent;
-  }
-}
-
-/* Tabs: floating bottom bar on phones, inline pills on wide screens */
-.tabs {
-  position: fixed;
-  left: 50%;
-  bottom: max(14px, env(safe-area-inset-bottom));
-  transform: translateX(-50%);
-  z-index: 50;
-  display: flex;
-  gap: 4px;
-  padding: 6px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--surface-solid) 82%, transparent);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-}
-.tab {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  border: 0;
-  background: none;
-  padding: 9px 16px;
-  border-radius: 999px;
-  color: var(--muted);
-  cursor: pointer;
-  font-size: 0.92rem;
-  text-decoration: none;
-  transition: background 0.25s var(--ease), color 0.25s;
-}
-.tab:hover {
-  color: var(--text);
-}
-.tab[aria-current='page'] {
-  background: var(--surface-2);
-  color: var(--text);
-}
-@media (max-width: 520px) {
-  .tab span {
-    display: none;
-  }
-  .tab {
-    padding: 11px 16px;
   }
 }
 
@@ -885,7 +882,7 @@ body.in-break .glow {
 
 /* Card-style overlay: a corner panel instead of full screen */
 .overlay.card-mode {
-  inset: auto 16px calc(90px + env(safe-area-inset-bottom)) auto;
+  inset: auto 16px calc(16px + env(safe-area-inset-bottom)) auto;
   width: min(380px, calc(100vw - 32px));
   padding: 18px;
   border-radius: var(--radius);
@@ -1600,6 +1597,20 @@ th.num {
 }
 .field select {
   max-width: 220px;
+  min-width: 0;
+}
+@media (max-width: 560px) {
+  .field.wide {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .field.wide select {
+    max-width: none;
+    width: 100%;
+  }
+}
+.table-scroll {
+  overflow-x: auto;
 }
 .field select option {
   background: var(--surface-solid);

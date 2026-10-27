@@ -40,6 +40,11 @@ Inspired by [pomotimer2](https://github.com/parmsam/pomotimer2) (stack, PWA appr
 - [x] "Look around" eye exercise, labelled Mixed evidence, with its own evidence file
 - [x] Update GitHub Actions versions (Node 20 deprecation)
 
+## v0.4.0 ✅
+
+- [x] Page icons in the header (top right), replacing the floating bottom bar
+- [x] Mobile layout: stacked settings rows, scrollable table, root overflow clip
+
 ## Next
 
 - [ ] **Work hours schedule:** auto-start and stop on chosen days and times

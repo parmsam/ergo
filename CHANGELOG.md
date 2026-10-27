@@ -2,6 +2,14 @@
 
 All notable changes to ergo. Versions follow [semver](https://semver.org); the version in `package.json` is shown in the app header and in Settings → About.
 
+## [0.4.0] - 2026-10-27
+
+### Added
+- **Page icons in the header** (top right) for Today, Progress, Guide and Settings, replacing the floating bottom bar (which covered content on phones).
+
+### Fixed
+- Mobile: Settings rows with dropdowns now stack so long option text doesn't squeeze them; the Progress table scrolls inside its card; and horizontal overflow is clipped at the root so pages can't appear zoomed out.
+
 ## [0.3.0] - 2026-10-27
 
 ### Added

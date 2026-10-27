@@ -40,7 +40,7 @@ test('break now, snooze and skip from the keyboard', async ({ page, isMobile }) 
   await expect(page.getByRole('dialog')).toBeHidden({ timeout: 4000 });
   await page.keyboard.press('e');
   await page.keyboard.press('s');
-  await page.getByRole('link', { name: 'Progress' }).click();
+  await page.getByRole('link', { name: 'Progress', exact: true }).click();
   await expect(page.locator('.log-row')).toHaveCount(2);
   await expect(page.locator('.log-row .st').first()).toHaveText('skipped');
 });
@@ -49,7 +49,7 @@ test('changing the eye rule in the guide applies it', async ({ page }) => {
   await open(page, quiet, '#guide');
   await page.locator('.rule-card', { hasText: '30-30-30' }).getByRole('button', { name: 'Use this' }).click();
   await expect(page.locator('.rule-card.selected', { hasText: '30-30-30' })).toBeVisible();
-  await page.getByRole('link', { name: 'Today' }).click();
+  await page.getByRole('link', { name: 'Today', exact: true }).click();
   await expect(page.locator('.lane.eye .time')).toHaveText('30:00');
 });
 
@@ -69,7 +69,7 @@ test('guide shows sourced myths and the 3 min active rule', async ({ page }) => 
   await open(page, quiet, '#guide');
   await expect(page.getByText('Blue-light glasses prevent digital eye strain.')).toBeVisible();
   await page.locator('.rule-card', { hasText: '3 min active / 30' }).getByRole('button', { name: 'Use this' }).click();
-  await page.getByRole('link', { name: 'Today' }).click();
+  await page.getByRole('link', { name: 'Today', exact: true }).click();
   await expect(page.locator('.lane.body .time')).toHaveText('30:00');
   await expect(page.locator('.tile', { hasText: 'Sitting (est.)' })).toContainText('of 8h budget');
 });
@@ -123,4 +123,26 @@ test('pause menu, resume and end day update the controls', async ({ page }) => {
   await page.getByRole('button', { name: 'End day' }).click();
   await expect(page.getByRole('button', { name: 'Start reminders' })).toBeVisible();
   await expect(page.locator('[data-bind="status"]')).toHaveText('Off');
+});
+
+test('header icons navigate between pages', async ({ page }) => {
+  await open(page, quiet);
+  const nav = page.getByRole('navigation', { name: 'Pages' });
+  for (const name of ['Progress', 'Guide', 'Settings', 'Today']) {
+    await nav.getByRole('link', { name }).click();
+    await expect(nav.getByRole('link', { name })).toHaveAttribute('aria-current', 'page');
+  }
+});
+
+test('no page is wider than the screen', async ({ page }) => {
+  await open(page, quiet);
+  for (const view of ['today', 'stats', 'guide', 'settings']) {
+    await page.evaluate((v) => (location.hash = v), view);
+    await page.locator('details.table-view').evaluateAll((els) => els.forEach((d) => ((d as HTMLDetailsElement).open = true)));
+    const wide = await page.evaluate(() => {
+      const vw = document.documentElement.clientWidth;
+      return [...document.querySelectorAll('#view *:not(.table-scroll *)')].filter((e) => e.getBoundingClientRect().right > vw + 1).length;
+    });
+    expect(wide, `${view} has elements past the right edge`).toBe(0);
+  }
 });

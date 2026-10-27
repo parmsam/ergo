@@ -128,13 +128,13 @@ export function renderStats(app: AppCtx) {
       <div class="legend"><span><i style="background:var(--eye)"></i>Eyes</span><span><i style="background:var(--body)"></i>Body</span></div>
       <div class="chart">${adherenceChart(week, settings.goalPct)}<div class="tooltip" hidden></div></div>
       <details class="table-view"><summary>Show as table</summary>
-        <table><thead><tr><th>Day</th><th class="num">Eye breaks</th><th class="num">Body breaks</th><th class="num">Stood up</th><th class="num">Sitting (est.)</th><th class="num">Screen time</th></tr></thead>
+        <div class="table-scroll"><table><thead><tr><th>Day</th><th class="num">Eye breaks</th><th class="num">Body breaks</th><th class="num">Stood up</th><th class="num">Sitting (est.)</th><th class="num">Screen time</th></tr></thead>
         <tbody>${week
           .map(
             (d) =>
               `<tr><td>${longDate(d.key)}</td><td class="num">${d.eye.done}/${d.eye.done + d.eye.skipped + d.eye.missed}</td><td class="num">${d.body.done}/${d.body.done + d.body.skipped + d.body.missed}</td><td class="num">${d.stand.done}</td><td class="num">${duration(d.sittingSec)}</td><td class="num">${duration(d.activeSec)}</td></tr>`,
           )
-          .join('')}</tbody></table>
+          .join('')}</tbody></table></div>
       </details>
     </div>
 

@@ -140,11 +140,11 @@ function shell() {
       <a class="ver" href="https://github.com/parmsam/ergo/blob/main/CHANGELOG.md" target="_blank" rel="noopener" title="What’s new">v${__APP_VERSION__}</a>
       <span class="spacer"></span>
       <span class="chip" data-bind="status"></span>
+      <nav class="top-nav" aria-label="Pages">${VIEWS.map((v) => `<a class="top-link" href="#${v.id}" data-view="${v.id}" aria-label="${v.label}" title="${v.label} (${VIEWS.indexOf(v) + 1})">${v.icon}</a>`).join('')}</nav>
     </header>
     <main id="view"></main>
     <footer class="foot">ergo v${__APP_VERSION__} · <a href="https://github.com/parmsam/ergo/tree/main/evidence" target="_blank" rel="noopener">evidence</a> · <a href="https://github.com/parmsam/ergo" target="_blank" rel="noopener">source</a> · not medical advice</footer>
-  </div>
-  <nav class="tabs" aria-label="Sections">${VIEWS.map((v) => `<a class="tab" href="#${v.id}" data-view="${v.id}" aria-label="${v.label}">${v.icon}<span>${v.label}</span></a>`).join('')}</nav>`;
+  </div>`;
 }
 
 function render(animate: boolean) {
@@ -159,7 +159,7 @@ function render(animate: boolean) {
   else if (view === 'guide') bindGuide(root, app);
   else bindSettings(root, app);
   root.querySelectorAll<HTMLElement>('[data-go]').forEach((b) => b.addEventListener('click', () => app.go(b.dataset.go as View)));
-  document.querySelectorAll<HTMLElement>('.tab').forEach((t) => (t.dataset.view === view ? t.setAttribute('aria-current', 'page') : t.removeAttribute('aria-current')));
+  document.querySelectorAll<HTMLElement>('.top-link').forEach((t) => (t.dataset.view === view ? t.setAttribute('aria-current', 'page') : t.removeAttribute('aria-current')));
   if (!animate) window.scrollTo(0, y);
   status();
   ctrl.tick();
@@ -170,7 +170,8 @@ function status() {
   if (!el) return;
   const s = store.get().session;
   const state = !s.running ? ['', 'Off'] : s.pausedAt ? ['paused', 'Paused'] : ['on', 'Running'];
-  el.innerHTML = `<span class="status-dot ${state[0]}"></span>${state[1]}`;
+  el.innerHTML = `<span class="status-dot ${state[0]}"></span><span class="status-text">${state[1]}</span>`;
+  el.title = state[1];
 }
 
 function title(now = Date.now()) {

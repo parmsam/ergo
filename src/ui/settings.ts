@@ -10,8 +10,9 @@ import { toast } from './toast';
 
 const sw = (key: string, on: boolean) => `<input type="checkbox" class="switch" data-bool="${key}" ${on ? 'checked' : ''}/>`;
 
+/** A settings row. Rows whose control is a dropdown stack on phones so long option text doesn't squeeze the label. */
 const field = (label: string, hint: string, control: string) =>
-  `<label class="field"><span class="lbl">${label}${hint ? `<span class="hint">${hint}</span>` : ''}</span>${control}</label>`;
+  `<label class="field ${control.includes('<select') ? 'wide' : ''}"><span class="lbl">${label}${hint ? `<span class="hint">${hint}</span>` : ''}</span>${control}</label>`;
 
 const num = (key: string, value: number, min: number, max: number, step = 1) =>
   `<input type="number" data-num="${key}" value="${value}" min="${min}" max="${max}" step="${step}" inputmode="numeric"/>`;
