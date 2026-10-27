@@ -12,4 +12,6 @@ export interface AppCtx {
   /** Change settings, persist, and let the controller react (e.g. restart a lane whose rule changed). */
   updateSettings(fn: (s: Settings) => void): void;
   go(view: View): void;
+  /** Re-render the current view after a state change (start/pause/resume/stop). */
+  refresh(): void;
 }

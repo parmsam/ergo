@@ -33,6 +33,7 @@ No break schedule in ergo currently rates **strong**. That's an honest reflectio
 | [blinking-dry-eye.md](blinking-dry-eye.md) | Blinking during eye breaks, dry-eye tips |
 | [posture-variety.md](posture-variety.md) | Posture-reset nudge, "no single correct posture", 90-90-90 myth |
 | [stretching.md](stretching.md) | Exercise library (and its limits) |
+| [eye-movement-exercises.md](eye-movement-exercises.md) | "Look around" eye exercise |
 | [workstation-setup.md](workstation-setup.md) | Workstation checklist |
 | [digital-eye-strain.md](digital-eye-strain.md) | Background on digital eye strain, eye exams |
 

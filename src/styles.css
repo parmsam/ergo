@@ -290,7 +290,8 @@ body.in-break .glow {
 }
 
 .view {
-  animation: view-in 0.45s var(--ease) both;
+  /* backwards, not both: holding the end state keeps a composited layer around, which caused stale-paint artifacts. */
+  animation: view-in 0.45s var(--ease) backwards;
 }
 @keyframes view-in {
   from {
@@ -583,8 +584,9 @@ body.in-break .glow {
   position: relative;
 }
 .pause-menu .menu {
+  /* Opens downward: the controls sit near the top of the page, so an upward menu ended up off-screen. */
   position: absolute;
-  bottom: calc(100% + 8px);
+  top: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%);
   display: grid;
@@ -594,7 +596,7 @@ body.in-break .glow {
   background: var(--surface-solid);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
-  z-index: 10;
+  z-index: 60;
   animation: pop-in 0.25s var(--spring);
 }
 .menu button {
@@ -611,7 +613,7 @@ body.in-break .glow {
 @keyframes pop-in {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(6px) scale(0.96);
+    transform: translateX(-50%) translateY(-6px) scale(0.96);
   }
 }
 .paused-note {
@@ -1374,6 +1376,8 @@ th.num {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 14px;
+  /* Opening one card shouldn't stretch the others in its row. */
+  align-items: start;
 }
 .rule-card {
   display: grid;
@@ -1477,8 +1481,23 @@ th.num {
 .check .d a {
   font-size: 0.8rem;
 }
+.area-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 16px 0 8px;
+}
+.area-head h3 {
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
 .ex-card summary {
   cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
   list-style: none;
   display: flex;
   justify-content: space-between;

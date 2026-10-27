@@ -2,6 +2,21 @@
 
 All notable changes to ergo. Versions follow [semver](https://semver.org); the version in `package.json` is shown in the app header and in Settings → About.
 
+## [0.3.0] - 2026-10-27
+
+### Added
+- **"Look around" eye exercise** in the eye-break rotation: slow up/down, left/right and diagonal eye movements, then rest. Labelled **Mixed evidence**: small, low-quality studies and a yoga trial (Telles 2006) report less eye fatigue, but nothing isolates eye movements. Evidence in `evidence/eye-movement-exercises.md`.
+- Exercises can carry their own evidence label and link in the Guide.
+- **Expand all / Collapse all** for each area of the exercise library.
+
+### Fixed
+- Today: the Pause menu opened upward, off the top of the screen, so its options couldn't be seen or picked. It now opens downward.
+- Today: choosing a pause option, Resume or End day didn't update the controls (no Resume button appeared after pausing) until something else redrew the page.
+- Guide: double-clicking an exercise card could leave a stale painted block behind. Cards no longer stretch their row-mates, the view's entry animation no longer holds a composited layer, and card titles aren't text-selected on double-click.
+
+### Changed
+- CI and deploy workflows use current GitHub Actions versions (checkout/setup-node/upload-artifact v7, upload-pages-artifact/deploy-pages v5), clearing the Node 20 deprecation warning.
+
 ## [0.2.0] - 2026-10-27
 
 ### Added

@@ -127,6 +127,7 @@ const app: AppCtx = {
     if (location.hash !== `#${v}`) location.hash = v;
     else render(true);
   },
+  refresh: () => render(false),
 };
 
 /* ---------- Rendering ---------- */

@@ -35,6 +35,11 @@ Inspired by [pomotimer2](https://github.com/parmsam/pomotimer2) (stack, PWA appr
 - [x] Remove the blink nudge (didn't make physiological sense)
 - [x] Fix CI WebKit timeouts so Pages deploys
 
+## v0.3.0 ✅
+
+- [x] "Look around" eye exercise, labelled Mixed evidence, with its own evidence file
+- [x] Update GitHub Actions versions (Node 20 deprecation)
+
 ## Next
 
 - [ ] **Work hours schedule:** auto-start and stop on chosen days and times
@@ -69,6 +74,7 @@ Inspired by [pomotimer2](https://github.com/parmsam/pomotimer2) (stack, PWA appr
 - 2026-10-27 (v0.2.0): **No invented numbers.** Intervals and thresholds need a source and must make physiological sense; unavoidable defaults are labelled as defaults. The blink nudge (every 10 min) was removed under this rule, since people normally blink 15–20 times a minute.
 - 2026-10-27 (v0.2.0): Sitting is estimated as running time minus body breaks and confirmed standing. It undercounts sitting away from the computer, and the UI says so.
 - 2026-10-27 (v0.2.0): Exercise snacks are off by default and kept out of the ergo score; the evidence is observational, and vigorous effort isn't for everyone.
+- 2026-10-27 (v0.3.0): Eye movement exercises are offered only as one optional step in eye breaks, labelled Mixed evidence. No dedicated reminder, and no claims about vision correction.
 - 2026-10-27 (v0.2.0): Linux WebKit e2e runs with reduced motion; continuous animations plus slow CI rendering kept elements from settling.
 
 ## Reference notes

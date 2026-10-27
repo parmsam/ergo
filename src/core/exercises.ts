@@ -1,4 +1,4 @@
-import type { Focus } from './types';
+import type { Focus, Strength } from './types';
 
 export interface Exercise {
   id: string;
@@ -11,6 +11,9 @@ export interface Exercise {
   area: 'Eyes' | 'Neck' | 'Shoulders & back' | 'Wrists & hands' | 'Hips & legs' | 'Whole body';
   /** Gentle caution, when one applies. */
   caution?: string;
+  /** evidence/ slug, for exercises with their own write-up. */
+  evidence?: string;
+  strength?: Strength;
 }
 
 /**
@@ -38,6 +41,21 @@ export const EXERCISES: Exercise[] = [
     for: ['eyes'],
     area: 'Eyes',
     steps: ['Rub your palms together to warm them', 'Cup them over closed eyes, no pressure on the eyeballs', 'Rest in the dark and breathe slowly'],
+  },
+  {
+    id: 'look-around',
+    name: 'Look around',
+    for: ['eyes', 'far'],
+    area: 'Eyes',
+    steps: [
+      'Keep your head still. Slowly look up, then down. Repeat 3 times',
+      'Slowly look left, then right. Repeat 3 times',
+      'Look to each corner: up-left, up-right, down-right, down-left',
+      'Close your eyes and rest for a few breaths',
+    ],
+    caution: 'Move slowly and stay within comfort; stop if you feel dizzy.',
+    evidence: 'eye-movement-exercises',
+    strength: 'limited',
   },
   {
     id: 'near-far',

@@ -52,7 +52,7 @@ Short, regular breaks help both. ergo runs two independent cycles, one for your 
   | Body | **3 min active / 30** | Half-squats, calf raises or a walk every 30 min (Dempsey 2016) | Trial |
   | Both | **Custom** | Your own intervals, including sit/stand/move | – |
 
-- **Guided, animated breaks.** Full-screen (or a gentler corner card) with a countdown and an animation that matches the break: receding rings for far gaze, a slow-blinking eye, breathing for stretches, footsteps for walks. A stepper walks you through 17 desk-friendly exercises.
+- **Guided, animated breaks.** Full-screen (or a gentler corner card) with a countdown and an animation that matches the break: receding rings for far gaze, a slow-blinking eye, breathing for stretches, footsteps for walks. A stepper walks you through 18 desk-friendly exercises.
 - **Standing cues.** On 20-8-2, ergo prompts you to stand and keep working, with an "I'm standing" button to log it.
 - **Nudges.** An optional posture reset, and an optional "exercise snack": one vigorous minute every couple of hours (Stamatakis 2022; observational evidence).
 - **Sitting budget.** Estimated daily sitting against the Canadian guideline of 8 hours or less, on Today and in a 7-day chart.

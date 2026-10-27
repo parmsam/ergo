@@ -17,6 +17,7 @@ describe('every recommendation is sourced', () => {
     ...CHECKLIST.map((c) => c.evidence),
     ...FACTS.map((f) => f.evidence),
     ...MYTHS.map((m) => m.evidence),
+    ...EXERCISES.flatMap((e) => (e.evidence ? [e.evidence] : [])),
     'stretching',
   ]);
   for (const slug of slugs) {

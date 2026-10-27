@@ -131,8 +131,8 @@ export function renderToday(app: AppCtx) {
 
 export function bindToday(root: HTMLElement, app: AppCtx) {
   root.querySelector('[data-act="start"]')?.addEventListener('click', () => app.actions.start());
-  root.querySelector('[data-act="resume"]')?.addEventListener('click', () => app.ctrl.resume());
-  root.querySelector('[data-act="stop"]')?.addEventListener('click', () => app.ctrl.stop());
+  root.querySelector('[data-act="resume"]')?.addEventListener('click', () => (app.ctrl.resume(), app.refresh()));
+  root.querySelector('[data-act="stop"]')?.addEventListener('click', () => (app.ctrl.stop(), app.refresh()));
   root.querySelectorAll<HTMLElement>('[data-act="break-now"]').forEach((b) => b.addEventListener('click', () => app.ctrl.breakNow(b.dataset.lane as TrackId)));
   root.querySelectorAll<HTMLElement>('[data-nudge]').forEach((b) =>
     b.addEventListener('click', () => {
@@ -162,6 +162,7 @@ export function bindToday(root: HTMLElement, app: AppCtx) {
       const t = (ev.target as HTMLElement).closest<HTMLElement>('[data-min]');
       if (!t) return;
       app.ctrl.pause(Number(t.dataset.min) || null);
+      app.refresh();
     });
     wrap.append(menu);
     (menu.firstElementChild as HTMLElement).focus();

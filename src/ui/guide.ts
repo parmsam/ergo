@@ -53,10 +53,14 @@ export function renderGuide(app: AppCtx) {
       <div class="section-title"><h2>Exercise library</h2><p>What breaks will guide you through</p></div>
       ${areas
         .map(
-          (a) => `<h3 class="muted small" style="margin:16px 0 8px;text-transform:uppercase;letter-spacing:.08em">${a}</h3><div class="grid-2">${EXERCISES.filter((e) => e.area === a)
+          (a) => `<div class="area-head"><h3>${a}</h3><button class="btn sm ghost" data-expand="${esc(a)}" aria-expanded="false">Expand all</button></div><div class="grid-2" data-area="${esc(a)}">${EXERCISES.filter((e) => e.area === a)
             .map(
               (e) => `<details class="card ex-card"><summary>${esc(e.name)} <span class="muted">${e.steps.length} steps</span></summary>
-                <ol>${e.steps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>${e.caution ? `<p class="caution">${esc(e.caution)}</p>` : ''}</details>`,
+                <ol>${e.steps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>${e.caution ? `<p class="caution">${esc(e.caution)}</p>` : ''}${
+                e.evidence
+                  ? `<p class="small" style="margin-top:8px"><span class="badge ${e.strength ?? 'expert'}">${STRENGTH_LABEL[e.strength ?? 'expert']}</span> <a href="${evidenceUrl(e.evidence)}" target="_blank" rel="noopener">Evidence</a></p>`
+                  : ''
+              }</details>`,
             )
             .join('')}</div>`,
         )
@@ -86,6 +90,21 @@ export function bindGuide(root: HTMLElement, app: AppCtx) {
       app.updateSettings((s) => (b.dataset.track === 'eye' ? (s.eyeRule = id) : (s.bodyRule = id)));
     }),
   );
+  // Per-area "Expand all / Collapse all", kept in sync when cards are toggled one at a time.
+  root.querySelectorAll<HTMLButtonElement>('[data-expand]').forEach((btn) => {
+    const cards = () => [...root.querySelectorAll<HTMLDetailsElement>(`[data-area="${CSS.escape(btn.dataset.expand!)}"] details`)];
+    const sync = () => {
+      const allOpen = cards().every((d) => d.open);
+      btn.textContent = allOpen ? 'Collapse all' : 'Expand all';
+      btn.setAttribute('aria-expanded', String(allOpen));
+    };
+    btn.addEventListener('click', () => {
+      const open = !cards().every((d) => d.open);
+      cards().forEach((d) => (d.open = open));
+      sync();
+    });
+    cards().forEach((d) => d.addEventListener('toggle', sync));
+  });
   root.querySelectorAll<HTMLInputElement>('[data-check]').forEach((c) =>
     c.addEventListener('change', () => app.store.update((d) => void (d.checklist[c.dataset.check!] = c.checked), ['checklist'])),
   );

@@ -82,3 +82,45 @@ test('exercise snack toast logs when acknowledged', async ({ page }) => {
   await page.keyboard.press('Escape');
   await expect(page.locator('.tile', { hasText: 'Exercise snacks' })).toContainText('1');
 });
+
+test('opening an exercise card does not stretch its row-mates', async ({ page }) => {
+  await open(page, quiet, '#guide');
+  const palming = page.locator('.ex-card', { hasText: 'Palming' });
+  const farGaze = page.locator('.ex-card', { hasText: 'Far gaze' });
+  const before = (await farGaze.boundingBox())!.height;
+  await palming.locator('summary').click();
+  await expect(palming.locator('ol')).toBeVisible();
+  expect((await farGaze.boundingBox())!.height).toBe(before);
+  await palming.locator('summary').dblclick();
+  expect(await page.evaluate(() => String(getSelection()))).toBe('');
+});
+
+test('expand all opens and collapses an exercise area', async ({ page }) => {
+  await open(page, quiet, '#guide');
+  const eyes = page.locator('.area-head', { hasText: 'Eyes' });
+  const cards = page.locator('[data-area="Eyes"] details');
+  await eyes.getByRole('button', { name: 'Expand all' }).click();
+  for (const d of await cards.all()) await expect(d).toHaveAttribute('open', '');
+  await expect(eyes.getByRole('button')).toHaveText('Collapse all');
+  await cards.first().locator('summary').click();
+  await expect(eyes.getByRole('button')).toHaveText('Expand all');
+  await eyes.getByRole('button').click();
+  await eyes.getByRole('button', { name: 'Collapse all' }).click();
+  for (const d of await cards.all()) await expect(d).not.toHaveAttribute('open', '');
+});
+
+test('pause menu, resume and end day update the controls', async ({ page }) => {
+  await open(page, quiet);
+  await page.getByRole('button', { name: 'Start reminders' }).click();
+  await page.getByRole('button', { name: 'Pause' }).click();
+  await page.getByRole('menuitem', { name: 'For 30 minutes (meeting)' }).click();
+  await expect(page.getByRole('button', { name: 'Resume' })).toBeVisible();
+  await expect(page.locator('[data-bind="status"]')).toHaveText('Paused');
+  await expect(page.locator('[data-bind="paused"]')).toContainText('Paused until');
+  await page.getByRole('button', { name: 'Resume' }).click();
+  await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();
+  await expect(page.locator('[data-bind="status"]')).toHaveText('Running');
+  await page.getByRole('button', { name: 'End day' }).click();
+  await expect(page.getByRole('button', { name: 'Start reminders' })).toBeVisible();
+  await expect(page.locator('[data-bind="status"]')).toHaveText('Off');
+});
