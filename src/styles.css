@@ -146,8 +146,7 @@ p {
   width: 60vmax;
   height: 60vmax;
   border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.35;
+  opacity: 0.5;
   animation: drift 28s ease-in-out infinite alternate;
 }
 .g1 {
@@ -316,8 +315,6 @@ body.in-break .glow {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 20px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
 }
 .section {
   margin-top: 28px;
@@ -405,6 +402,9 @@ body.in-break .glow {
 }
 .badge.moderate {
   color: var(--eye);
+}
+.badge.observational {
+  color: var(--body);
 }
 .badge.limited {
   color: var(--warn);
@@ -1245,6 +1245,9 @@ body.in-break .glow {
 .chart .bar-body {
   fill: var(--body);
 }
+.chart .bar-over {
+  fill: var(--bad);
+}
 .chart .bar-time {
   fill: var(--muted);
 }
@@ -1513,6 +1516,27 @@ th.num {
 .fact .icon {
   color: var(--eye);
   margin-top: 3px;
+}
+.myth p {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.myth .icon {
+  margin-top: 3px;
+}
+.myth-claim {
+  color: var(--muted);
+}
+.myth-claim .icon {
+  color: var(--bad);
+}
+.myth-truth {
+  margin-top: 10px;
+  font-size: 0.92rem;
+}
+.myth-truth .icon {
+  color: var(--good);
 }
 .disclaimer {
   margin-top: 18px;

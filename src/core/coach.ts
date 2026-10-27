@@ -16,6 +16,8 @@ export interface CoachInput {
   checklist: Record<string, boolean>;
   /** Minutes the reminders have been running today. */
   activeMin: number;
+  /** Daily sitting budget in hours (0 = off). */
+  sitBudgetH?: number;
   seed: number;
 }
 
@@ -34,6 +36,13 @@ export function coach(i: CoachInput): CoachNote {
     return {
       text: `${i.skips.eye} eye breaks skipped. Twenty seconds of looking out a window is enough. No need to leave your desk.`,
       evidence: '20-20-20-rule',
+      tone: 'nudge',
+    };
+  const budget = (i.sitBudgetH ?? 0) * 3600;
+  if (budget && i.today.sittingSec >= budget * 0.85)
+    return {
+      text: `About ${Math.round(i.today.sittingSec / 360) / 10} h of sitting tracked today, near your ${i.sitBudgetH} h budget. Take calls standing or walk for the rest of the day where you can.`,
+      evidence: 'sitting-budget',
       tone: 'nudge',
     };
   const done = i.today.eye.done + i.today.body.done;

@@ -6,7 +6,7 @@ import type { Focus, Settings, Status } from '../core/types';
 import { esc, ring, setRing } from './dom';
 import { icons } from './icons';
 
-const LANE_LABEL = { eye: 'Eye break', body: 'Body break', blink: 'Blink', posture: 'Posture' } as const;
+const LANE_LABEL = { eye: 'Eye break', body: 'Body break', posture: 'Posture', snack: 'Exercise snack' } as const;
 
 function visual(focus: Focus | undefined) {
   switch (focus) {
@@ -16,6 +16,7 @@ function visual(focus: Focus | undefined) {
     case 'blink':
       return `<svg class="blink-eye" viewBox="0 0 100 60"><g class="lid"><path d="M5 30C20 10 35 5 50 5s30 5 45 25C80 50 65 55 50 55S20 50 5 30Z"/><circle class="iris" cx="50" cy="30" r="13"/></g></svg>`;
     case 'walk':
+    case 'active':
       return '<div class="steps"><i></i><i></i><i></i><i></i></div>';
     default:
       return '<div class="breathe"><i></i><span></span></div>';

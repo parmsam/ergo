@@ -33,14 +33,27 @@ export interface DaySummary {
   key: string;
   eye: Counts;
   body: Counts;
-  /** Standing cues acknowledged / shown. */
-  stand: { shown: number; done: number };
+  /** Standing cues acknowledged / shown, and seconds stood. */
+  stand: { shown: number; done: number; sec: number };
+  /** Exercise snacks prompted / done. */
+  snacks: { shown: number; done: number };
   nudges: number;
   activeSec: number;
+  /** Estimated sitting: running time minus standing and body breaks. */
+  sittingSec: number;
 }
 
 export function summarize(log: LogEntry[], days: Record<string, DayTotals>, key: string): DaySummary {
-  const s: DaySummary = { key, eye: emptyCounts(), body: emptyCounts(), stand: { shown: 0, done: 0 }, nudges: 0, activeSec: days[key]?.activeSec ?? 0 };
+  const s: DaySummary = {
+    key,
+    eye: emptyCounts(),
+    body: emptyCounts(),
+    stand: { shown: 0, done: 0, sec: 0 },
+    snacks: { shown: 0, done: 0 },
+    nudges: 0,
+    activeSec: days[key]?.activeSec ?? 0,
+    sittingSec: 0,
+  };
   for (const e of log) {
     if (dayKey(e.t) !== key) continue;
     if (e.kind === 'break' && (e.lane === 'eye' || e.lane === 'body')) {
@@ -53,9 +66,16 @@ export function summarize(log: LogEntry[], days: Record<string, DayTotals>, key:
       else if (e.status === 'snoozed') c.snoozed++;
     } else if (e.kind === 'cue' && e.lane === 'body') {
       s.stand.shown++;
-      if (e.status === 'done') s.stand.done++;
+      if (e.status === 'done') {
+        s.stand.done++;
+        s.stand.sec += e.sec;
+      }
+    } else if (e.kind === 'cue' && e.lane === 'snack') {
+      s.snacks.shown++;
+      if (e.status === 'done') s.snacks.done++;
     } else if (e.kind === 'cue') s.nudges++;
   }
+  s.sittingSec = Math.max(0, s.activeSec - s.body.sec - s.stand.sec);
   return s;
 }
 

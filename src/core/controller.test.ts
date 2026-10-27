@@ -8,7 +8,7 @@ const T0 = new Date('2026-06-01T09:00:00').getTime();
 
 function setup(over: Partial<typeof DEFAULT_SETTINGS> = {}) {
   const store = createStore({
-    settings: mergeSettings({ ...DEFAULT_SETTINGS, nudges: { blink: { on: false, everyMin: 10 }, posture: { on: false, everyMin: 15 } }, ...over }),
+    settings: mergeSettings({ ...DEFAULT_SETTINGS, nudges: { posture: { on: false, everyMin: 15 }, snack: { on: false, everyMin: 120 } }, ...over }),
     session: { ...DEFAULT_SESSION },
     log: [],
     days: {},
@@ -51,7 +51,7 @@ describe('controller', () => {
     run(1000, 20 * MIN);
     expect(fx.cue).toHaveBeenCalledWith(expect.objectContaining({ lane: 'body' }));
     ctrl.ackCue('body');
-    expect(store.get().log.find((e) => e.kind === 'cue')?.status).toBe('done');
+    expect(store.get().log.find((e) => e.kind === 'cue')).toMatchObject({ status: 'done', sec: 8 * 60 });
     ctrl.done('eye', T0 + 20 * MIN);
     run(20 * MIN + 1000, 28 * MIN);
     expect(ctrl.activeBreaks().map((b) => b.lane)).toEqual(['body']);
@@ -103,6 +103,15 @@ describe('controller', () => {
     run(10_000, 19 * MIN + 50_000, 10_000);
     ctrl.tick(T0 + 20 * MIN + 40_000); // 50 s gap, eye break 20:00–20:20 fell in between
     expect(store.get().log.find((e) => e.lane === 'eye')).toMatchObject({ status: 'done', t: T0 + 20 * MIN });
+  });
+
+  it('exercise snack nudge cues on its interval and can be acknowledged', () => {
+    const { ctrl, fx, store, run } = setup({ nudges: { posture: { on: false, everyMin: 15 }, snack: { on: true, everyMin: 120 } } });
+    ctrl.start(T0);
+    run(1000, 121 * MIN, 5000);
+    expect(fx.cue).toHaveBeenCalledWith(expect.objectContaining({ lane: 'snack' }));
+    ctrl.ackCue('snack', T0 + 121 * MIN);
+    expect(store.get().log.find((e) => e.lane === 'snack')).toMatchObject({ status: 'done', sec: 60 });
   });
 
   it('changing a rule restarts only that lane', () => {

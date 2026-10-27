@@ -32,8 +32,8 @@ export function renderSettings(app: AppCtx) {
           .map(([id, l]) => `<option value="${id}" ${s.bodyRule === id ? 'selected' : ''}>${esc(l)}</option>`)
           .join('')}</select>`)}
         ${s.bodyRule === 'custom-body' ? `<div class="custom-row"><label>Sit (min)${num('custom.body.sitMin', s.custom.body.sitMin, 1, 180)}</label><label>Stand (min, 0 = none)${num('custom.body.standMin', s.custom.body.standMin, 0, 120)}</label><label>Move (min)${num('custom.body.moveMin', s.custom.body.moveMin, 1, 30)}</label></div>` : ''}
-        ${field('Blink nudge', `Every ${s.nudges.blink.everyMin} min, a quick reminder to blink fully`, `<span style="display:flex;gap:8px;align-items:center">${num('nudges.blink.everyMin', s.nudges.blink.everyMin, 2, 120)}${sw('nudges.blink.on', s.nudges.blink.on)}</span>`)}
-        ${field('Posture reset nudge', `Every ${s.nudges.posture.everyMin} min, shift and reset your position`, `<span style="display:flex;gap:8px;align-items:center">${num('nudges.posture.everyMin', s.nudges.posture.everyMin, 5, 120)}${sw('nudges.posture.on', s.nudges.posture.on)}</span>`)}
+        ${field('Exercise snack', `Every ${s.nudges.snack.everyMin} min, one vigorous minute (stairs, brisk walk). Skip it if you have a heart condition unless your doctor says it’s fine.`, `<span style="display:flex;gap:8px;align-items:center">${num('nudges.snack.everyMin', s.nudges.snack.everyMin, 30, 480, 15)}${sw('nudges.snack.on', s.nudges.snack.on)}</span>`)}
+        ${field('Posture reset nudge', `Every ${s.nudges.posture.everyMin} min, shift and reset your position (default interval, not researched)`, `<span style="display:flex;gap:8px;align-items:center">${num('nudges.posture.everyMin', s.nudges.posture.everyMin, 5, 120)}${sw('nudges.posture.on', s.nudges.posture.on)}</span>`)}
       </div>
     </div>
 
@@ -46,6 +46,7 @@ export function renderSettings(app: AppCtx) {
         ${field('Gentle escalation', 'After 2 skipped breaks in a row, the next one is full screen with a coaching note', sw('escalate', s.escalate))}
         ${field('Away threshold', 'If ergo’s own timer stalls this long (laptop asleep), cycles restart fresh. ergo never monitors your keyboard or mouse.', `<span>${num('awayMin', s.awayMin, 2, 60)} min</span>`)}
         ${field('Daily goal', 'Share of breaks to take for a streak day', `<span>${num('goalPct', s.goalPct, 10, 100, 5)} %</span>`)}
+        ${field('Sitting budget', 'Daily hours of sitting to aim under (Canadian guidelines: 8 or less). 0 hides it.', `<span>${num('sitBudgetH', s.sitBudgetH, 0, 16)} h</span>`)}
       </div>
     </div>
 

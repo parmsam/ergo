@@ -49,12 +49,15 @@ Short, regular breaks help both. ergo runs two independent cycles, one for your 
   | Body | **20-8-2** (default) | Sit 20, stand 8, move 2 (Cornell, Hedge) | Expert guidance |
   | Body | **5 min walk / 30** | Light walk every 30 min (Duran 2023) | Trial |
   | Body | **2 min walk / 20** | Light walk every 20 min (Dunstan 2012) | Trial |
+  | Body | **3 min active / 30** | Half-squats, calf raises or a walk every 30 min (Dempsey 2016) | Trial |
   | Both | **Custom** | Your own intervals, including sit/stand/move | – |
 
-- **Guided, animated breaks.** Full-screen (or a gentler corner card) with a countdown and an animation that matches the break: receding rings for far gaze, a slow-blinking eye, breathing for stretches, footsteps for walks. A stepper walks you through 14 desk-friendly exercises.
+- **Guided, animated breaks.** Full-screen (or a gentler corner card) with a countdown and an animation that matches the break: receding rings for far gaze, a slow-blinking eye, breathing for stretches, footsteps for walks. A stepper walks you through 17 desk-friendly exercises.
 - **Standing cues.** On 20-8-2, ergo prompts you to stand and keep working, with an "I'm standing" button to log it.
-- **Nudges.** Optional blink and posture-reset reminders between breaks.
-- **Coaching.** A daily coach note and gentle escalation: after two skipped breaks in a row, the next one goes full screen with a reason to take it.
+- **Nudges.** An optional posture reset, and an optional "exercise snack": one vigorous minute every couple of hours (Stamatakis 2022; observational evidence).
+- **Sitting budget.** Estimated daily sitting against the Canadian guideline of 8 hours or less, on Today and in a 7-day chart.
+- **Coaching.** A daily coach note (including when you near your sitting budget) and gentle escalation: after two skipped breaks in a row, the next one goes full screen with a reason to take it.
+- **Myths, debunked.** Blue-light glasses, "90-90-90" posture, and more, each with a source.
 - **Workstation checklist.** Twelve sourced setup items (screen distance and height, glare, chair, sit-stand, eye exams). Your progress feeds the score.
 - **Progress.** A daily **ergo score**, a streak, and 7-day charts of breaks taken and screen time, with a table view and a full break log.
 - **Reliable timing.** Cycles are derived from timestamps, not countdowns. Ticks run in a Web Worker, and chimes are scheduled on the audio clock, so background tabs don't drift. If your laptop sleeps, ergo treats it as a break and restarts fresh.

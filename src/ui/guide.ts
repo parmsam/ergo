@@ -1,5 +1,5 @@
 import { EXERCISES } from '../core/exercises';
-import { CHECKLIST, FACTS, setupPct } from '../core/guide';
+import { CHECKLIST, FACTS, MYTHS, setupPct } from '../core/guide';
 import { BODY_RULES, EYE_RULES, NUDGES, STRENGTH_LABEL, evidenceUrl } from '../core/rules';
 import type { Rule } from '../core/types';
 import type { AppCtx } from './ctx';
@@ -28,7 +28,7 @@ export function renderGuide(app: AppCtx) {
     <div class="section-title"><h2>The rules</h2><p>Pick one for your eyes and one for your body.</p></div>
     <div class="grid-2">${EYE_RULES.map((r) => ruleCard(r, settings.eyeRule === r.id)).join('')}</div>
     <div class="grid-2" style="margin-top:14px">${BODY_RULES.map((r) => ruleCard(r, settings.bodyRule === r.id)).join('')}</div>
-    <p class="muted small" style="margin-top:12px">Evidence labels: <strong>Trial evidence</strong> means controlled studies support it; <strong>Mixed evidence</strong> means studies disagree; <strong>Expert guidance</strong> means recommended by specialists, but the exact numbers haven’t been tested. Nudges: ${(Object.keys(NUDGES) as (keyof typeof NUDGES)[])
+    <p class="muted small" style="margin-top:12px">Evidence labels: <strong>Trial evidence</strong> means controlled studies support it; <strong>Mixed evidence</strong> means studies disagree; <strong>Observational</strong> means large studies link it to better health, but haven’t proven cause; <strong>Expert guidance</strong> means recommended by specialists, but the exact numbers haven’t been tested. Nudges: ${(Object.keys(NUDGES) as (keyof typeof NUDGES)[])
       .map((k) => `<a href="${evidenceUrl(NUDGES[k].evidence)}" target="_blank" rel="noopener">${NUDGES[k].name.toLowerCase()}</a>`)
       .join(', ')}.</p>
 
@@ -62,6 +62,13 @@ export function renderGuide(app: AppCtx) {
         )
         .join('')}
       <p class="muted small" style="margin-top:10px">Stretch gently and never into pain. Evidence for specific stretches is thin; <a href="${evidenceUrl('stretching')}" target="_blank" rel="noopener">changing position and moving</a> is what matters most.</p>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><h2>Myths</h2><p>Popular advice the evidence doesn’t back</p></div>
+      <div class="grid-2">${MYTHS.map(
+        (m) => `<article class="card myth"><p class="myth-claim">${icons.x}<s>${esc(m.myth)}</s></p><p class="myth-truth">${icons.check}<span>${esc(m.truth)} <a class="small" href="${evidenceUrl(m.evidence)}" target="_blank" rel="noopener">source</a></span></p></article>`,
+      ).join('')}</div>
     </div>
 
     <div class="section card">

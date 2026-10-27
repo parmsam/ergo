@@ -1,7 +1,7 @@
 import { expect, open, test } from './helpers';
 
 // awayMin is raised because fastForward jumps the clock in one step, which otherwise reads as the laptop sleeping.
-const quiet = { settings: { nudges: { blink: { on: false, everyMin: 10 }, posture: { on: false, everyMin: 15 } }, notify: false, awayMin: 60 } };
+const quiet = { settings: { nudges: { posture: { on: false, everyMin: 15 }, snack: { on: false, everyMin: 120 } }, notify: false, awayMin: 60 } };
 
 test('starts, runs an eye break at 20 min, and logs it', async ({ page }) => {
   await open(page, quiet);
@@ -63,4 +63,22 @@ test('workstation checklist persists', async ({ page }) => {
 test('link action starts a body break', async ({ page }) => {
   await open(page, quiet, '?do=break&lane=body');
   await expect(page.getByRole('dialog').getByRole('heading', { name: 'Move' })).toBeVisible();
+});
+
+test('guide shows sourced myths and the 3 min active rule', async ({ page }) => {
+  await open(page, quiet, '#guide');
+  await expect(page.getByText('Blue-light glasses prevent digital eye strain.')).toBeVisible();
+  await page.locator('.rule-card', { hasText: '3 min active / 30' }).getByRole('button', { name: 'Use this' }).click();
+  await page.getByRole('link', { name: 'Today' }).click();
+  await expect(page.locator('.lane.body .time')).toHaveText('30:00');
+  await expect(page.locator('.tile', { hasText: 'Sitting (est.)' })).toContainText('of 8h budget');
+});
+
+test('exercise snack toast logs when acknowledged', async ({ page }) => {
+  await open(page, { settings: { ...quiet.settings, nudges: { ...quiet.settings.nudges, snack: { on: true, everyMin: 30 } } } });
+  await page.getByRole('button', { name: 'Start reminders' }).click();
+  await page.clock.fastForward('30:00');
+  await page.getByRole('button', { name: 'Did it' }).click({ timeout: 5000 });
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.tile', { hasText: 'Exercise snacks' })).toContainText('1');
 });

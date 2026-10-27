@@ -1,7 +1,7 @@
 /** The two main break tracks. Each runs its own repeating cycle of phases. */
 export type TrackId = 'eye' | 'body';
 /** Lightweight cue-only reminders that run alongside the tracks. */
-export type NudgeId = 'blink' | 'posture';
+export type NudgeId = 'posture' | 'snack';
 export type LaneId = TrackId | NudgeId;
 
 /**
@@ -12,10 +12,10 @@ export type LaneId = TrackId | NudgeId;
 export type PhaseKind = 'work' | 'cue' | 'break';
 
 /** How well a rule is supported. See evidence/README.md for the grading scale. */
-export type Strength = 'strong' | 'moderate' | 'limited' | 'expert';
+export type Strength = 'strong' | 'moderate' | 'observational' | 'limited' | 'expert';
 
 /** What a cue/break asks you to do; picks the animation and exercises shown. */
-export type Focus = 'far' | 'eyes' | 'stretch' | 'walk' | 'stand' | 'blink' | 'posture';
+export type Focus = 'far' | 'eyes' | 'stretch' | 'walk' | 'active' | 'stand' | 'blink' | 'posture';
 
 export interface Phase {
   kind: PhaseKind;
@@ -65,6 +65,8 @@ export interface Settings {
   autoStart: boolean;
   /** Daily adherence goal, used for streaks. */
   goalPct: number;
+  /** Daily sitting budget in hours (Canadian 24-Hour Movement Guidelines: 8 h or less). 0 hides it. */
+  sitBudgetH: number;
 }
 
 export interface Session {

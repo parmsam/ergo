@@ -2,6 +2,31 @@
 
 All notable changes to ergo. Versions follow [semver](https://semver.org); the version in `package.json` is shown in the app header and in Settings → About.
 
+## [0.2.0] - 2026-10-27
+
+### Added
+- **"3 min active / 30" body rule** (Dempsey 2016): every 30 min, 3 min of half-squats, calf raises, knee raises, glute squeezes or a walk. Includes new no-equipment exercises.
+- **Daily sitting budget** (Canadian 24-Hour Movement Guidelines: 8 h or less):
+  - A "Sitting (est.)" tile on Today, and a sitting chart with a budget line on Progress.
+  - A coach note near the limit.
+  - Configurable; 0 hides it.
+- **Exercise snack nudge** (Stamatakis 2022): an optional vigorous minute every 2 h, with "Did it" logging and a tile on Today.
+- **Myths** in the Guide: blue-light glasses, 90-90-90 posture, "a standing desk solves sitting", "screens permanently damage eyes".
+- New **Observational** evidence label for cohort-study findings.
+- Evidence: `sitting-budget.md`, `exercise-snacks.md`, `blue-light-glasses.md`; Dempsey 2016 added to `walking-breaks.md`; Nosch 2015 added to `blinking-dry-eye.md`; the 90-90-90 myth added to `posture-variety.md`.
+
+### Changed
+- Standing time you confirm is recorded and subtracted from estimated sitting.
+- "I'm standing" and "Did it" also work for 10 minutes after a cue ends.
+- Settings label nudge intervals as defaults rather than researched numbers.
+- Lighter rendering (no full-screen blur filters on the background or cards) for smoother performance on slower devices.
+
+### Removed
+- **The blink nudge.** People normally blink 15–20 times a minute, so a reminder every few minutes didn't address the real problem (fewer, incomplete blinks during screen use). Blinking stays in eye-break exercises and dry-eye tips.
+
+### Fixed
+- CI: end-to-end tests timed out in Linux WebKit, which blocked the first Pages deploy.
+
 ## [0.1.0] - 2026-10-27
 
 First release.

@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { coach } from './coach';
 import { EXERCISES, pickExercises } from './exercises';
-import { CHECKLIST, FACTS } from './guide';
+import { CHECKLIST, FACTS, MYTHS } from './guide';
 import { BODY_RULES, EYE_RULES, NUDGES, customBodyRule } from './rules';
 import { DEFAULT_SETTINGS } from './storage';
 import { summarize } from './stats';
@@ -16,6 +16,7 @@ describe('every recommendation is sourced', () => {
     ...Object.values(NUDGES).map((n) => n.evidence),
     ...CHECKLIST.map((c) => c.evidence),
     ...FACTS.map((f) => f.evidence),
+    ...MYTHS.map((m) => m.evidence),
     'stretching',
   ]);
   for (const slug of slugs) {
@@ -41,7 +42,7 @@ describe('rules', () => {
 
 describe('exercises & coach', () => {
   it('has exercises for every break focus', () => {
-    for (const f of ['far', 'eyes', 'stretch', 'walk', 'stand'] as const) expect(pickExercises(f, 3).length).toBeGreaterThan(0);
+    for (const f of ['far', 'eyes', 'stretch', 'walk', 'active', 'stand'] as const) expect(pickExercises(f, 3).length).toBeGreaterThan(0);
     expect(new Set(EXERCISES.map((e) => e.id)).size).toBe(EXERCISES.length);
   });
   it('responds to repeated skipped body breaks first', () => {

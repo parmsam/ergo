@@ -1,4 +1,4 @@
-import type { DayTotals, LogEntry, Session, Settings } from './types';
+import type { DayTotals, LogEntry, NudgeId, Session, Settings } from './types';
 
 /** All persistence goes through here. Keys are namespaced and versioned; every access tolerates a broken or missing store. */
 const NS = 'ergo:v1:';
@@ -11,8 +11,8 @@ export const DEFAULT_SETTINGS: Settings = {
     body: { sitMin: 25, standMin: 0, moveMin: 5 },
   },
   nudges: {
-    blink: { on: false, everyMin: 10 },
     posture: { on: true, everyMin: 15 },
+    snack: { on: false, everyMin: 120 },
   },
   sound: true,
   volume: 0.6,
@@ -25,6 +25,7 @@ export const DEFAULT_SETTINGS: Settings = {
   theme: 'auto',
   autoStart: false,
   goalPct: 70,
+  sitBudgetH: 8,
 };
 
 export const DEFAULT_SESSION: Session = { running: false, pausedAt: null, pausedUntil: null, anchors: {}, lastTick: null };
@@ -64,10 +65,9 @@ export function mergeSettings(saved: Partial<Settings> | null | undefined): Sett
       eye: { ...DEFAULT_SETTINGS.custom.eye, ...s.custom?.eye },
       body: { ...DEFAULT_SETTINGS.custom.body, ...s.custom?.body },
     },
-    nudges: {
-      blink: { ...DEFAULT_SETTINGS.nudges.blink, ...s.nudges?.blink },
-      posture: { ...DEFAULT_SETTINGS.nudges.posture, ...s.nudges?.posture },
-    },
+    nudges: Object.fromEntries(
+      (Object.keys(DEFAULT_SETTINGS.nudges) as NudgeId[]).map((k) => [k, { ...DEFAULT_SETTINGS.nudges[k], ...s.nudges?.[k] }]),
+    ) as Settings['nudges'],
   };
 }
 

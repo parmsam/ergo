@@ -24,6 +24,23 @@ describe('summaries', () => {
   });
 });
 
+describe('sitting estimate', () => {
+  it('subtracts body breaks and confirmed standing from running time', () => {
+    const t = at('2026-04-02');
+    const log: LogEntry[] = [
+      { t, lane: 'body', rule: 'x', kind: 'break', status: 'done', sec: 120 },
+      { t, lane: 'body', rule: 'x', kind: 'cue', status: 'done', sec: 480 },
+      { t, lane: 'body', rule: 'x', kind: 'cue', status: 'shown', sec: 0 },
+      { t, lane: 'snack', rule: 'snack', kind: 'cue', status: 'done', sec: 60 },
+    ];
+    const s = summarize(log, { '2026-04-02': { activeSec: 3600 } }, '2026-04-02');
+    expect(s.sittingSec).toBe(3600 - 120 - 480);
+    expect(s.stand).toEqual({ shown: 2, done: 1, sec: 480 });
+    expect(s.snacks).toEqual({ shown: 1, done: 1 });
+    expect(s.nudges).toBe(0);
+  });
+});
+
 describe('streak', () => {
   it('counts goal days, skipping days with nothing due', () => {
     const log = [e(at('2026-05-01'), 'eye', 'done'), e(at('2026-05-03'), 'eye', 'done'), e(at('2026-05-04'), 'eye', 'done'), e(at('2026-05-04'), 'eye', 'skipped')];

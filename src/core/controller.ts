@@ -337,17 +337,21 @@ export function createController(store: Store, fx: Effects) {
     scheduleTones(now);
   }
 
-  /** "I'm standing" on a body cue. */
-  function ackCue(id: LaneId) {
+  /** "I'm standing" on a body cue, or "Did it" on an exercise snack. */
+  function ackCue(id: LaneId, now = Date.now()) {
     const c = cues.get(id);
-    if (!c) return;
+    // The toast can outlive the cue phase, so also accept a cue that ended in the last 10 minutes.
+    const phaseSec = c ? (c.end - c.start) / 1000 : (lane(id)?.phases.find((p) => p.kind === 'cue')?.sec ?? 0);
     store.update((d) => {
       for (let i = d.log.length - 1; i >= 0; i--) {
         const e = d.log[i];
-        if (e.lane === id && e.kind === 'cue' && e.t === c.start) {
+        if (e.lane !== id || e.kind !== 'cue') continue;
+        if (c ? e.t === c.start : e.status === 'shown' && now - e.t < 10 * 60_000) {
           e.status = 'done';
-          break;
+          // Assume the whole standing phase was spent standing; a snack is about a minute.
+          e.sec = id === 'snack' ? 60 : Math.round(phaseSec);
         }
+        break;
       }
     }, ['log']);
     endCue(id);

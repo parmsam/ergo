@@ -26,6 +26,15 @@ Inspired by [pomotimer2](https://github.com/parmsam/pomotimer2) (stack, PWA appr
 - [x] Unit + e2e tests; CI and Pages deploy workflows
 - [x] README with logo, screenshots and version badge; AGENTS.md; CHANGELOG
 
+## v0.2.0: more evidence-based options ✅
+
+- [x] "3 min active / 30" body rule (Dempsey 2016) with no-equipment strength moves
+- [x] Daily sitting budget from the Canadian 24-Hour Movement Guidelines (estimated sitting, chart, coach note)
+- [x] Optional exercise-snack nudge (VILPA, Stamatakis 2022), labelled Observational
+- [x] Myths section in the Guide (blue-light glasses, 90-90-90, standing desks, permanent eye damage)
+- [x] Remove the blink nudge (didn't make physiological sense)
+- [x] Fix CI WebKit timeouts so Pages deploys
+
 ## Next
 
 - [ ] **Work hours schedule:** auto-start and stop on chosen days and times
@@ -35,6 +44,7 @@ Inspired by [pomotimer2](https://github.com/parmsam/pomotimer2) (stack, PWA appr
 - [ ] **Break-length nudge:** suggest a longer eye break when eye-break follow-through is high but symptoms persist (user-reported)
 - [ ] **Optional symptom check-in** (1–5 eye strain / neck / back at end of day) to see whether habits help *you*. Kept local
 - [ ] **Hydration nudge**, if a credible source can justify the framing
+- [ ] **Posture-reset interval:** find a source for a reset cadence, or reconsider the nudge (its 15 min is a default)
 - [ ] **Localization** of units (ft/m) based on locale
 - [ ] **Accessibility audit** with screen readers on the overlay and charts
 - [ ] **Evidence review cadence:** re-check sources yearly; track `Last reviewed` dates
@@ -56,6 +66,10 @@ Inspired by [pomotimer2](https://github.com/parmsam/pomotimer2) (stack, PWA appr
 - 2026-10-27: Evidence labels are honest. 20-20-20 is "Mixed": a reminders trial helped short-term, but the specific numbers are debated. 30-30-30 is "Expert guidance": no trials found. No schedule is rated "Strong".
 - 2026-10-27: Ticks run in a Web Worker and chimes are scheduled on the AudioContext clock, to survive background-tab throttling.
 - 2026-10-27: The ergo score is 40% eye follow-through, 40% body follow-through and 20% workstation setup, reweighted when a part has nothing to measure.
+- 2026-10-27 (v0.2.0): **No invented numbers.** Intervals and thresholds need a source and must make physiological sense; unavoidable defaults are labelled as defaults. The blink nudge (every 10 min) was removed under this rule, since people normally blink 15–20 times a minute.
+- 2026-10-27 (v0.2.0): Sitting is estimated as running time minus body breaks and confirmed standing. It undercounts sitting away from the computer, and the UI says so.
+- 2026-10-27 (v0.2.0): Exercise snacks are off by default and kept out of the ergo score; the evidence is observational, and vigorous effort isn't for everyone.
+- 2026-10-27 (v0.2.0): Linux WebKit e2e runs with reduced motion; continuous animations plus slow CI rendering kept elements from settling.
 
 ## Reference notes
 

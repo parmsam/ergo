@@ -1,6 +1,6 @@
 import { duration, pct, timeOfDay } from '../core/format';
 import { setupPct } from '../core/guide';
-import { NUDGES, BODY_RULES, EYE_RULES } from '../core/rules';
+import { NUDGES, BODY_RULES, EYE_RULES, evidenceUrl } from '../core/rules';
 import { adherence, dayKey, ergoScore, lastDays, streak, summarize, type DaySummary } from '../core/stats';
 import type { LogEntry } from '../core/types';
 import type { AppCtx } from './ctx';
@@ -56,37 +56,41 @@ function adherenceChart(days: DaySummary[], goalPct: number) {
   </svg>`;
 }
 
-function timeChart(days: DaySummary[]) {
+/** Estimated sitting per day, with the daily budget as a reference line (budgetH 0 = no line). */
+function sittingChart(days: DaySummary[], budgetH: number) {
   const ih = H - MB - MT;
-  const gw = (W - ML) / days.length;
+  const gw = (W - ML - MR) / days.length;
   const bw = Math.min(30, gw * 0.45);
-  const maxH = Math.max(1, ...days.map((d) => d.activeSec / 3600));
-  const top = Math.ceil(maxH);
+  const top = Math.ceil(Math.max(1, budgetH, ...days.map((d) => d.sittingSec / 3600)));
   const y = (h: number) => MT + ih * (1 - h / top);
   const grid = [0, top / 2, top]
-    .map((v) => `<line x1="${ML}" x2="${W}" y1="${y(v)}" y2="${y(v)}"/><text x="${ML - 8}" y="${y(v) + 4}" text-anchor="end">${+v.toFixed(1)}h</text>`)
+    .map((v) => `<line x1="${ML}" x2="${W - MR}" y1="${y(v)}" y2="${y(v)}"/><text x="${ML - 8}" y="${y(v) + 4}" text-anchor="end">${+v.toFixed(1)}h</text>`)
     .join('');
   const cols = days
     .map((d, i) => {
       const cx = ML + gw * i + gw / 2;
-      const h = d.activeSec / 3600;
-      return `<g class="col" data-tip="${esc(`${longDate(d.key)}|Screen time: ${duration(d.activeSec)}`)}">
+      const h = d.sittingSec / 3600;
+      return `<g class="col" data-tip="${esc(`${longDate(d.key)}|Sitting (est.): ${duration(d.sittingSec)}|Screen time: ${duration(d.activeSec)}|Standing: ${duration(d.stand.sec)}`)}">
         <rect class="hit" x="${ML + gw * i + 2}" y="${MT}" width="${gw - 4}" height="${ih}" rx="8"/>
-        ${bar(cx - bw / 2, y(h), bw, y(0) - y(h), 'bar-time')}
+        ${bar(cx - bw / 2, y(h), bw, y(0) - y(h), budgetH && h > budgetH ? 'bar-over' : 'bar-time')}
         <text x="${cx}" y="${H - 6}" text-anchor="middle">${weekday(d.key)}</text>
       </g>`;
     })
     .join('');
-  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Tracked screen time by day, last 7 days"><g class="grid axis">${grid}</g><g class="axis">${cols}</g></svg>`;
+  const line = budgetH
+    ? `<line class="goal" x1="${ML}" x2="${W - MR}" y1="${y(budgetH)}" y2="${y(budgetH)}"/><text class="goal-label" x="${W - MR + 6}" y="${y(budgetH) + 4}">budget ${budgetH}h</text>`
+    : '';
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Estimated sitting time by day, last 7 days${budgetH ? `, against a ${budgetH} hour budget` : ''}"><g class="grid axis">${grid}</g>${line}<g class="axis">${cols}</g></svg>`;
 }
 
-const LANE_NAME: Record<string, string> = { eye: 'Eye break', body: 'Body break', blink: NUDGES.blink.name, posture: NUDGES.posture.name };
+const LANE_NAME: Record<string, string> = { eye: 'Eye break', body: 'Body break', blink: 'Blink', posture: NUDGES.posture.name, snack: NUDGES.snack.name };
 const ruleName = (id: string) => [...EYE_RULES, ...BODY_RULES].find((r) => r.id === id)?.name ?? (id.startsWith('custom') ? 'Custom' : '');
 
 function logRow(e: LogEntry) {
-  const lane = e.lane === 'body' ? 'body' : 'eye';
+  const lane = e.lane === 'body' || e.lane === 'snack' ? 'body' : 'eye';
   const label = e.kind === 'cue' && e.lane === 'body' ? 'Stand cue' : LANE_NAME[e.lane];
-  const icon = e.kind === 'cue' && e.lane === 'body' ? icons.stand : e.lane === 'body' ? icons.walk : e.lane === 'eye' ? icons.eye : e.lane === 'blink' ? icons.blink : icons.posture;
+  const icon =
+    e.kind === 'cue' && e.lane === 'body' ? icons.stand : e.lane === 'body' ? icons.walk : e.lane === 'eye' ? icons.eye : (e.lane as string) === 'blink' ? icons.blink : e.lane === 'snack' ? icons.bolt : icons.posture;
   return `<div class="log-row ${lane}"><span class="muted">${timeOfDay(e.t)}</span>${icon}<span>${label} <span class="muted small">${esc(ruleName(e.rule))}</span></span><span class="st ${e.status}">${e.status}</span></div>`;
 }
 
@@ -97,7 +101,7 @@ export function renderStats(app: AppCtx) {
   const week = lastDays(log, days, now, 7);
   const score = ergoScore(today, setupPct(checklist));
   const run = streak(log, days, now, settings.goalPct);
-  const recent = log.filter((e) => e.kind === 'break' || e.lane === 'body').slice(-25).reverse();
+  const recent = log.filter((e) => e.kind === 'break' || e.lane === 'body' || e.lane === 'snack').slice(-25).reverse();
   const totalFar = week.reduce((s, d) => s + d.eye.sec, 0);
   const totalMove = week.reduce((s, d) => s + d.body.sec, 0);
 
@@ -124,19 +128,20 @@ export function renderStats(app: AppCtx) {
       <div class="legend"><span><i style="background:var(--eye)"></i>Eyes</span><span><i style="background:var(--body)"></i>Body</span></div>
       <div class="chart">${adherenceChart(week, settings.goalPct)}<div class="tooltip" hidden></div></div>
       <details class="table-view"><summary>Show as table</summary>
-        <table><thead><tr><th>Day</th><th class="num">Eye breaks</th><th class="num">Body breaks</th><th class="num">Stood up</th><th class="num">Screen time</th></tr></thead>
+        <table><thead><tr><th>Day</th><th class="num">Eye breaks</th><th class="num">Body breaks</th><th class="num">Stood up</th><th class="num">Sitting (est.)</th><th class="num">Screen time</th></tr></thead>
         <tbody>${week
           .map(
             (d) =>
-              `<tr><td>${longDate(d.key)}</td><td class="num">${d.eye.done}/${d.eye.done + d.eye.skipped + d.eye.missed}</td><td class="num">${d.body.done}/${d.body.done + d.body.skipped + d.body.missed}</td><td class="num">${d.stand.done}</td><td class="num">${duration(d.activeSec)}</td></tr>`,
+              `<tr><td>${longDate(d.key)}</td><td class="num">${d.eye.done}/${d.eye.done + d.eye.skipped + d.eye.missed}</td><td class="num">${d.body.done}/${d.body.done + d.body.skipped + d.body.missed}</td><td class="num">${d.stand.done}</td><td class="num">${duration(d.sittingSec)}</td><td class="num">${duration(d.activeSec)}</td></tr>`,
           )
           .join('')}</tbody></table>
       </details>
     </div>
 
     <div class="section card">
-      <div class="section-title"><h2>Screen time, last 7 days</h2><p>Time ergo was running</p></div>
-      <div class="chart">${timeChart(week)}<div class="tooltip" hidden></div></div>
+      <div class="section-title"><h2>Sitting, last 7 days</h2><p>Estimated: time ergo ran, minus standing and body breaks</p></div>
+      <div class="chart">${sittingChart(week, settings.sitBudgetH)}<div class="tooltip" hidden></div></div>
+      ${settings.sitBudgetH ? `<p class="muted small">Canada’s 24-hour movement guidelines suggest 8 hours or less of sitting a day, including off-screen time, which ergo can’t see. <a href="${evidenceUrl('sitting-budget')}" target="_blank" rel="noopener">Evidence</a></p>` : ''}
     </div>
 
     <div class="section card">

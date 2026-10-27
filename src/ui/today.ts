@@ -42,6 +42,7 @@ export function renderToday(app: AppCtx) {
     skips: { eye: skipRun(log, 'eye'), body: skipRun(log, 'body') },
     checklist,
     activeMin: today.activeSec / 60,
+    sitBudgetH: settings.sitBudgetH,
     seed: Math.floor(now / 600_000),
   });
 
@@ -84,7 +85,7 @@ export function renderToday(app: AppCtx) {
     .map((id) => {
       const n = settings.nudges[id];
       return `<button class="chip nudge ${n.on ? '' : 'off'}" data-nudge="${id}" title="${n.on ? 'Turn off' : 'Turn on'}">
-        ${id === 'blink' ? icons.blink : icons.posture}
+        ${id === 'snack' ? icons.bolt : icons.posture}
         <span>${NUDGES[id].name} every ${n.everyMin}m</span>
         <strong data-bind="nudge-${id}">${n.on ? '' : 'off'}</strong>
       </button>`;
@@ -110,7 +111,12 @@ export function renderToday(app: AppCtx) {
         ${tile('Eye breaks', icons.eye, `${today.eye.done}`, `of ${eyeDue} · ${pct(adherence(today.eye))}`, adherence(today.eye), 'eye')}
         ${tile('Body breaks', icons.walk, `${today.body.done}`, `of ${bodyDue} · ${pct(adherence(today.body))}`, adherence(today.body), 'body')}
         ${tile('Stood up', icons.stand, `${today.stand.done}`, `of ${today.stand.shown} cues`, today.stand.shown ? today.stand.done / today.stand.shown : null, 'body')}
-        ${tile('Screen time', icons.chart, duration(today.activeSec), 'tracked', null, 'eye')}
+        ${
+          settings.sitBudgetH
+            ? tile('Sitting (est.)', icons.chart, duration(today.sittingSec), `of ${settings.sitBudgetH}h budget`, Math.min(1, today.sittingSec / (settings.sitBudgetH * 3600)), today.sittingSec > settings.sitBudgetH * 3600 ? 'bad' : 'eye')
+            : tile('Screen time', icons.chart, duration(today.activeSec), 'tracked', null, 'eye')
+        }
+        ${settings.nudges.snack.on ? tile('Exercise snacks', icons.bolt, `${today.snacks.done}`, `of ${today.snacks.shown}`, today.snacks.shown ? today.snacks.done / today.snacks.shown : null, 'body') : ''}
       </div>
     </div>
     <div class="section card coach ${note.tone}">

@@ -9,7 +9,8 @@ export default defineConfig({
   webServer: { command: 'npx vite --port 5179 --strictPort', url: 'http://localhost:5179/ergo/', reuseExistingServer: !process.env.CI },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    { name: 'webkit', use: { ...devices['Desktop Safari'] } },
+    // Linux WebKit in CI renders slowly; with animations running, clicks can wait forever for "stable" elements.
+    { name: 'webkit', use: { ...devices['Desktop Safari'], contextOptions: { reducedMotion: 'reduce' } } },
     { name: 'mobile', use: { ...devices['Pixel 7'] } },
   ],
 });

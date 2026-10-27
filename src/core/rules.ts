@@ -1,4 +1,4 @@
-import type { NudgeId, Phase, Rule, Settings, Strength, TrackId } from './types';
+import type { Focus, NudgeId, Phase, Rule, Settings, Strength, TrackId } from './types';
 
 const MIN = 60;
 
@@ -89,16 +89,23 @@ export const BODY_RULES: Rule[] = [
     strength: 'moderate',
     evidence: 'walking-breaks',
   },
+  {
+    id: 'active-3-30',
+    track: 'body',
+    name: '3 min active / 30',
+    tagline: 'Every 30 min, 3 min of walking or simple strength moves',
+    summary:
+      'Half-squats, calf raises and knee raises, or a light walk. In a 2016 trial, 3 min every 30 min improved blood sugar versus sitting; the strength moves also lowered triglycerides. No equipment, no need to leave your desk.',
+    phases: [
+      { kind: 'work', sec: 30 * MIN, label: 'Sitting' },
+      { kind: 'break', sec: 3 * MIN, label: 'Get active', prompt: '3 min: half-squats, calf raises, knee raises, or a brisk walk', focus: 'active' },
+    ],
+    strength: 'moderate',
+    evidence: 'walking-breaks',
+  },
 ];
 
-export const NUDGES: Record<NudgeId, { name: string; prompt: string; focus: 'blink' | 'posture'; evidence: string; strength: Strength }> = {
-  blink: {
-    name: 'Blink',
-    prompt: 'Blink slowly and fully, 10 times',
-    focus: 'blink',
-    evidence: 'blinking-dry-eye',
-    strength: 'moderate',
-  },
+export const NUDGES: Record<NudgeId, { name: string; prompt: string; focus: Focus; evidence: string; strength: Strength }> = {
   posture: {
     name: 'Posture reset',
     prompt: 'Shift position: drop your shoulders, ease your head back, feet flat',
@@ -106,11 +113,19 @@ export const NUDGES: Record<NudgeId, { name: string; prompt: string; focus: 'bli
     evidence: 'posture-variety',
     strength: 'expert',
   },
+  snack: {
+    name: 'Exercise snack',
+    prompt: 'One vigorous minute: take the stairs fast, walk briskly uphill, or carry something heavy',
+    focus: 'active',
+    evidence: 'exercise-snacks',
+    strength: 'observational',
+  },
 };
 
 export const STRENGTH_LABEL: Record<Strength, string> = {
   strong: 'Strong evidence',
   moderate: 'Trial evidence',
+  observational: 'Observational',
   limited: 'Mixed evidence',
   expert: 'Expert guidance',
 };
@@ -167,6 +182,7 @@ export function nudgePhases(id: NudgeId, everyMin: number): Phase[] {
   const n = NUDGES[id];
   return [
     { kind: 'work', sec: Math.max(1, everyMin) * MIN, label: n.name },
-    { kind: 'cue', sec: 15, label: n.name, prompt: n.prompt, focus: n.focus },
+    // A snack cue spans the vigorous minute itself; other cues are a brief prompt.
+    { kind: 'cue', sec: id === 'snack' ? 60 : 15, label: n.name, prompt: n.prompt, focus: n.focus },
   ];
 }

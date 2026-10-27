@@ -5,9 +5,9 @@ beforeEach(() => localStorage.clear());
 
 describe('storage', () => {
   it('fills in new settings without losing saved ones', () => {
-    const s = mergeSettings({ eyeRule: '30-30-30', nudges: { blink: { on: true, everyMin: 5 } } } as never);
+    const s = mergeSettings({ eyeRule: '30-30-30', nudges: { snack: { on: true, everyMin: 90 } } } as never);
     expect(s.eyeRule).toBe('30-30-30');
-    expect(s.nudges.blink).toEqual({ on: true, everyMin: 5 });
+    expect(s.nudges.snack).toEqual({ on: true, everyMin: 90 });
     expect(s.nudges.posture.on).toBe(true);
   });
 

@@ -29,12 +29,12 @@ const VIEWS: { id: View; label: string; icon: string }[] = [
 const viewFromHash = (): View => (VIEWS.find((v) => `#${v.id}` === location.hash)?.id ?? 'today');
 let view: View = viewFromHash();
 
-const LANE_TITLE: Record<LaneId, string> = { eye: 'Eye break', body: 'Body break', blink: NUDGES.blink.name, posture: NUDGES.posture.name };
+const LANE_TITLE: Record<LaneId, string> = { eye: 'Eye break', body: 'Body break', posture: NUDGES.posture.name, snack: NUDGES.snack.name };
 
 function coachLine(b: ActiveBreak) {
-  const { log, days, checklist } = store.get();
+  const { log, days, checklist, settings } = store.get();
   const today = summarize(log, days, dayKey(Date.now()));
-  return coach({ today, skips: { eye: skipRun(log, 'eye'), body: skipRun(log, 'body') }, checklist, activeMin: today.activeSec / 60, seed: b.start }).text;
+  return coach({ today, skips: { eye: skipRun(log, 'eye'), body: skipRun(log, 'body') }, checklist, activeMin: today.activeSec / 60, sitBudgetH: settings.sitBudgetH, seed: b.start }).text;
 }
 
 /** Play a chime now unless one was already scheduled on the audio clock for this moment. */
@@ -67,20 +67,25 @@ const ctrl = createController(store, {
   cue(c) {
     chimeIfMissed(c.start, 'cue');
     const stand = c.lane === 'body';
+    const snack = c.lane === 'snack';
     toast(c.phase.prompt ?? c.phase.label, {
       id: `cue-${c.lane}`,
       title: stand ? 'Time to stand' : NUDGES[c.lane as NudgeId]?.name,
-      icon: stand ? 'stand' : c.lane === 'blink' ? 'blink' : 'posture',
-      tone: stand || c.lane === 'posture' ? 'body' : 'eye',
-      duration: stand ? 0 : 12_000,
-      actions: stand ? [{ label: 'I’m standing', primary: true, run: () => ctrl.ackCue('body') }, { label: 'Not now', run: () => {} }] : [],
+      icon: stand ? 'stand' : snack ? 'bolt' : 'posture',
+      tone: stand || snack || c.lane === 'posture' ? 'body' : 'eye',
+      duration: stand ? 0 : snack ? 60_000 : 12_000,
+      actions: stand
+        ? [{ label: 'I’m standing', primary: true, run: () => ctrl.ackCue('body') }, { label: 'Not now', run: () => {} }]
+        : snack
+          ? [{ label: 'Did it', primary: true, run: () => ctrl.ackCue('snack') }, { label: 'Skip', run: () => {} }]
+          : [],
     });
     if (store.get().settings.notify && document.visibilityState !== 'visible')
       void notify(stand ? 'Time to stand' : (NUDGES[c.lane as NudgeId]?.name ?? 'ergo'), { body: c.phase.prompt ?? '', tag: `ergo-cue-${c.lane}` });
   },
   cueEnd(lane) {
     dismissToast(`cue-${lane}`);
-    if (lane === 'body' && view === 'today') render(false);
+    if ((lane === 'body' || lane === 'snack') && view === 'today') render(false);
   },
   away(ms) {
     overlay.close();
