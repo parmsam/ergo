@@ -1,0 +1,62 @@
+# PLAN
+
+The living plan for ergo. Tick items as they land; add dated lines to the decisions log when direction changes.
+
+## Goal
+
+A personal, installable break-reminder app focused on **eye health** and **posture/movement**:
+- Grounded in reputable evidence, with sources kept in `evidence/`.
+- Pleasant enough to keep using, with nice UI and meaningful animation.
+- Honest tracking that stays private.
+
+Inspired by [pomotimer2](https://github.com/parmsam/pomotimer2) (stack, PWA approach, conventions) and by commercial stretch-break coaching tools (guided exercises, escalation, a score). Unlike those tools, ergo does **no activity monitoring**.
+
+## v0.1.0: foundation ✅
+
+- [x] Two-track engine (eyes, body) derived from timestamps; pause/resume, snooze, skip, done, break-now
+- [x] Rules with evidence labels: 20-20-20, 30-30-30, hourly microbreak; 20-8-2, walk 5/30, walk 2/20; custom
+- [x] Standing cues with acknowledgment; blink and posture-reset nudges
+- [x] Animated break overlay with exercise stepper; corner-card mode
+- [x] Coach notes and gentle escalation after repeated skips
+- [x] Workstation checklist (sourced) feeding the ergo score
+- [x] Progress: score, streak, 7-day charts with table view, break log
+- [x] Worker ticks, audio-clock chimes, notifications with actions (SW), away handling
+- [x] PWA (offline, install, shortcuts), link actions, keyboard shortcuts, light/dark themes, reduced motion
+- [x] Evidence folder with sourced write-ups and a test that enforces sourcing
+- [x] Unit + e2e tests; CI and Pages deploy workflows
+- [x] README with logo, screenshots and version badge; AGENTS.md; CHANGELOG
+
+## Next
+
+- [ ] **Work hours schedule:** auto-start and stop on chosen days and times
+- [ ] **Pop-out mini timer** (Document Picture-in-Picture, Chromium) that floats over other windows
+- [ ] **Weekly review:** compare this week with last, best and worst times of day for skipping
+- [ ] **Per-exercise preferences:** hide exercises you can't or won't do; favorites
+- [ ] **Break-length nudge:** suggest a longer eye break when eye-break follow-through is high but symptoms persist (user-reported)
+- [ ] **Optional symptom check-in** (1–5 eye strain / neck / back at end of day) to see whether habits help *you*. Kept local
+- [ ] **Hydration nudge**, if a credible source can justify the framing
+- [ ] **Localization** of units (ft/m) based on locale
+- [ ] **Accessibility audit** with screen readers on the overlay and charts
+- [ ] **Evidence review cadence:** re-check sources yearly; track `Last reviewed` dates
+
+## Not doing
+
+- Keyboard/mouse/idle monitoring, camera posture detection, or any telemetry (privacy).
+- Accounts or sync servers. Use export/import instead.
+- Medical claims or diagnosis.
+
+## Decisions log
+
+- 2026-10-27: Name **ergo** (short for ergonomics, short and memorable). Repo `parmsam/ergo`, served at `/ergo/`.
+- 2026-10-27: Stack mirrors pomotimer2: Vite + strict TS, no framework, vite-plugin-pwa with a prompt-to-update flow.
+- 2026-10-27: Two independent lanes (eye, body) plus optional nudge lanes. Each is a repeating list of phases (`work` | `cue` | `break`) with an anchor timestamp.
+- 2026-10-27: **Honor system by default.** A break that runs out without Skip counts as done, because you're supposed to be looking away, not clicking. It can be switched off so only breaks seen in ergo count.
+- 2026-10-27: A finished body break restarts the eye timer (you looked away while moving). On by default.
+- 2026-10-27: **No activity monitoring** (user decision). Idle Detection was considered for crediting natural pauses and rejected for privacy. The only away signal is a gap in ergo's own ticks (laptop asleep), which counts as a break and restarts cycles.
+- 2026-10-27: Evidence labels are honest. 20-20-20 is "Mixed": a reminders trial helped short-term, but the specific numbers are debated. 30-30-30 is "Expert guidance": no trials found. No schedule is rated "Strong".
+- 2026-10-27: Ticks run in a Web Worker and chimes are scheduled on the AudioContext clock, to survive background-tab throttling.
+- 2026-10-27: The ergo score is 40% eye follow-through, 40% body follow-through and 20% workstation setup, reweighted when a part has nothing to measure.
+
+## Reference notes
+
+- Commercial stretch-break coaching tools (e.g. Wellnomics) combine guided exercises, sit-stand prompts, escalation on repeated skips, a live wellbeing score and ergonomic tips. ergo adopts the coaching ideas but not their keyboard/mouse activity monitoring.
