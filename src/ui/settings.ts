@@ -49,6 +49,7 @@ export function renderSettings(app: AppCtx) {
         ${field('Break screen', 'Full screen is harder to ignore; a corner card is gentler', `<select data-sel="overlay"><option value="full" ${s.overlay === 'full' ? 'selected' : ''}>Full screen</option><option value="card" ${s.overlay === 'card' ? 'selected' : ''}>Corner card</option></select>`)}
         ${field('Honor system', 'A break that runs out without you pressing Skip counts as taken. Turn off to only count breaks you saw in ergo.', sw('trustBreaks', s.trustBreaks))}
         ${field('Moving rests your eyes too', 'A finished body break restarts the eye timer', sw('bodyResetsEye', s.bodyResetsEye))}
+        ${field('Ring until I respond', 'Like an alarm: the chime repeats every 15 s and the break waits until you press Start, Done, Snooze or Skip. After 5 min with no answer it counts as missed (default timings, not researched). On a Mac, set ergo’s notifications to Alerts so they stay on screen. iPhone and iPad pause sound in the background.', sw('ringUntilAnswered', s.ringUntilAnswered))}
         ${field('Gentle escalation', 'After 2 skipped breaks in a row, the next one is full screen with a coaching note', sw('escalate', s.escalate))}
         ${field('Away threshold', 'If ergo’s own timer stalls this long (laptop asleep), cycles restart fresh. ergo never monitors your keyboard or mouse.', ctl(withUnit(num('awayMin', s.awayMin, 2, 60), 'min')))}
         ${field('Daily goal', 'Share of breaks to take for a streak day', ctl(withUnit(num('goalPct', s.goalPct, 10, 100, 5), '%')))}

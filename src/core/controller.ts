@@ -22,7 +22,12 @@ export interface ActiveBreak {
   seen: boolean;
   /** Recent breaks on this lane were skipped; show it more prominently. */
   escalated: boolean;
+  /** "Ring until I respond": the alarm repeats and the countdown waits until you answer. */
+  ringing: boolean;
 }
+
+/** Time left on a break's countdown. A ringing break hasn't started counting yet. */
+export const breakLeft = (b: ActiveBreak, now: number) => (b.ringing ? b.phase.sec * 1000 : b.end - now);
 
 export interface ActiveCue {
   lane: LaneId;
@@ -33,6 +38,8 @@ export interface ActiveCue {
 
 export interface Effects {
   breakStart(b: ActiveBreak): void;
+  /** A ringing break was answered: its countdown starts now. */
+  breakAnswered(b: ActiveBreak): void;
   breakEnd(b: ActiveBreak, status: Status, auto: boolean): void;
   cue(c: ActiveCue): void;
   cueEnd(lane: LaneId): void;
@@ -56,6 +63,9 @@ export function lanesFor(s: Settings): Lane[] {
 
 const TONE_HORIZON = 30 * 60_000;
 const FLUSH_MS = 15_000;
+/** Ringing breaks repeat the chime this often, and give up (logged missed) after RING_MAX. Defaults, not researched. */
+export const RING_EVERY = 15_000;
+export const RING_MAX = 5 * 60_000;
 
 export function createController(store: Store, fx: Effects) {
   /** Phase occurrence each lane was in at the last tick. */
@@ -66,6 +76,8 @@ export function createController(store: Store, fx: Effects) {
   let lastFlush = 0;
   let lastToneSchedule = 0;
   let pendingActive = 0;
+  /** A break the user started on purpose doesn't need to ring for them. */
+  let manual: LaneId | null = null;
 
   const settings = () => store.get().settings;
   const session = () => store.get().session;
@@ -78,6 +90,9 @@ export function createController(store: Store, fx: Effects) {
     const l = lane(id);
     const anchor = session().anchors[id];
     if (!l || anchor == null) return null;
+    // A ringing break holds its lane at the start of the break until it's answered.
+    const b = active.get(id);
+    if (b?.ringing) return phaseAt(l.phases, anchorFor(l.phases, effectiveNow(now), b.index), effectiveNow(now));
     return phaseAt(l.phases, anchor, effectiveNow(now));
   }
 
@@ -119,14 +134,26 @@ export function createController(store: Store, fx: Effects) {
     const s = session();
     if (!settings().sound || !s.running || s.pausedAt) return fx.tones([]);
     const events: { at: number; tone: Tone }[] = [];
+    const ring = settings().ringUntilAnswered;
+    const repeats = (l: Lane, from: number) => {
+      for (let at = from + RING_EVERY; at < from + RING_MAX; at += RING_EVERY) if (at > now) events.push({ at, tone: l.id === 'eye' ? 'eye' : 'body' });
+    };
     for (const l of lanes()) {
       const anchor = s.anchors[l.id];
       if (anchor == null) continue;
+      const b = active.get(l.id);
+      // Everything after a ringing break waits on the answer, which reschedules.
+      if (b?.ringing) {
+        repeats(l, b.start);
+        continue;
+      }
       for (const u of upcoming(l.phases, anchor, now, now + TONE_HORIZON)) {
         const before = l.phases[(u.index - 1 + l.phases.length) % l.phases.length];
-        if (u.phase.kind === 'break') events.push({ at: u.at, tone: l.id === 'eye' ? 'eye' : 'body' });
-        else if (u.phase.kind === 'cue') events.push({ at: u.at, tone: 'cue' });
-        else if (before.kind === 'break') events.push({ at: u.at, tone: 'end' });
+        if (u.phase.kind === 'break') {
+          events.push({ at: u.at, tone: l.id === 'eye' ? 'eye' : 'body' });
+          if (ring && u.at !== b?.start) repeats(l, u.at);
+        } else if (u.phase.kind === 'cue') events.push({ at: u.at, tone: 'cue' });
+        else if (before.kind === 'break' && !(ring && u.at - before.sec * 1000 !== b?.start)) events.push({ at: u.at, tone: 'end' });
       }
     }
     // Two lanes landing on the same moment play one chime; a body break outranks an eye break.
@@ -145,6 +172,7 @@ export function createController(store: Store, fx: Effects) {
       end: s.end,
       seen: false,
       escalated: settings().escalate && skipRun(store.get().log, l.id) >= 2,
+      ringing: settings().ringUntilAnswered && manual !== l.id,
     };
     active.set(l.id, b);
     fx.breakStart(b);
@@ -156,7 +184,8 @@ export function createController(store: Store, fx: Effects) {
     active.delete(id);
     const auto = status === undefined;
     const final: Status = status ?? (settings().trustBreaks || b.seen ? 'done' : 'missed');
-    log({ t: b.start, lane: id, rule: b.rule, kind: 'break', status: final, sec: Math.max(0, Math.round((Math.min(now, b.end) - b.start) / 1000)) });
+    const sec = b.ringing ? 0 : Math.max(0, Math.round((Math.min(now, b.end) - b.start) / 1000));
+    log({ t: b.start, lane: id, rule: b.rule, kind: 'break', status: final, sec });
     fx.breakEnd(b, final, auto);
     // Moving around means you looked away too: restart the eye cycle so the next eye break isn't seconds away.
     const eye = lane('eye');
@@ -202,6 +231,11 @@ export function createController(store: Store, fx: Effects) {
         setAnchors({ [l.id]: now }); // a nudge just switched on
         continue;
       }
+      const ringing = active.get(l.id);
+      if (ringing?.ringing) {
+        if (now - ringing.start >= RING_MAX) giveUp(l.id, now);
+        continue;
+      }
       const cur = phaseAt(l.phases, anchor, now);
       const key = phaseKey(cur);
       const before = prev.get(l.id);
@@ -229,6 +263,35 @@ export function createController(store: Store, fx: Effects) {
 
     if (now - lastFlush >= FLUSH_MS) flush(now);
     if (now - lastToneSchedule >= 10 * 60_000) scheduleTones(now);
+    fx.tick(now);
+  }
+
+  /** Nobody answered a ringing break: log it missed and carry on with the cycle. */
+  function giveUp(id: LaneId, now: number) {
+    const b = active.get(id);
+    if (!b) return;
+    finalize(id, 'missed', now);
+    jump(id, b.index + 1, now);
+    scheduleTones(now);
+  }
+
+  /** Answer ringing breaks (the given lane, or all): stop the alarm and start the countdown now. */
+  function answer(id?: LaneId, now = Date.now()) {
+    let any = false;
+    for (const b of active.values()) {
+      if (!b.ringing || (id && b.lane !== id)) continue;
+      const l = lane(b.lane);
+      if (!l) continue;
+      b.ringing = false;
+      b.seen = true;
+      b.start = now;
+      b.end = now + b.phase.sec * 1000;
+      jump(b.lane, b.index, now);
+      fx.breakAnswered(b);
+      any = true;
+    }
+    if (!any) return;
+    scheduleTones(now);
     fx.tick(now);
   }
 
@@ -333,7 +396,9 @@ export function createController(store: Store, fx: Effects) {
     endCue(id);
     setAnchors({ [id]: anchorFor(l.phases, now, idx) });
     prev.delete(id);
+    manual = id;
     tick(now);
+    manual = null;
     scheduleTones(now);
   }
 
@@ -396,6 +461,7 @@ export function createController(store: Store, fx: Effects) {
     done: (id?: LaneId, now?: number) => resolve('done', id, now),
     skip: (id?: LaneId, now?: number) => resolve('skipped', id, now),
     snooze,
+    answer,
     ackCue,
     markSeen,
     settingsChanged,

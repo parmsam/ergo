@@ -1,4 +1,4 @@
-import type { ActiveBreak, Controller } from '../core/controller';
+import { breakLeft, type ActiveBreak, type Controller } from '../core/controller';
 import { pickExercises, type Exercise } from '../core/exercises';
 import { clock } from '../core/format';
 import { ruleFor } from '../core/rules';
@@ -54,7 +54,7 @@ export function createOverlay(o: { ctrl: Controller; settings: () => Settings; c
       el.setAttribute('aria-labelledby', 'ov-title');
       document.body.append(el);
     }
-    el.className = `overlay ${tone} ${card ? 'card-mode' : ''}`;
+    el.className = `overlay ${tone} ${card ? 'card-mode' : ''} ${b.ringing ? 'ringing' : ''}`;
     delete el.dataset.state;
     document.body.classList.add('in-break');
     el.innerHTML = `<div class="ov">
@@ -64,29 +64,32 @@ export function createOverlay(o: { ctrl: Controller; settings: () => Settings; c
       <div class="ov-stage">
         ${ring(1)}
         <div class="ov-visual">${visual(b.phase.focus)}</div>
-        <div class="ov-count" data-bind="ov-count">${clock(b.end - Date.now())}</div>
+        <div class="ov-count" data-bind="ov-count">${clock(breakLeft(b, Date.now()))}</div>
       </div>
       ${exercises.length ? `<div class="ex card"><div class="ex-head"><h3 data-bind="ex-name"></h3><div class="dots" data-bind="ex-dots"></div></div><p class="ex-step" data-bind="ex-step"></p></div>` : ''}
       ${coach ? `<p class="ov-coach">${esc(coach)}</p>` : ''}
+      ${b.ringing ? `<p class="ov-ringing" role="status">${icons.bell}Ringing until you respond. The countdown starts when you do.</p>` : ''}
       <div class="ov-actions">
-        <button class="btn primary" data-ov="done">${icons.check}Done <kbd>D</kbd></button>
+        ${b.ringing ? `<button class="btn primary" data-ov="start">${icons.play}Start <kbd>↵</kbd></button>` : ''}
+        <button class="btn ${b.ringing ? '' : 'primary'}" data-ov="done">${icons.check}Done <kbd>D</kbd></button>
         <button class="btn" data-ov="snooze">${icons.snooze}5 min <kbd>Z</kbd></button>
         <button class="btn ghost" data-ov="skip">${icons.skip}Skip <kbd>S</kbd></button>
       </div>
       ${others.length ? `<p class="ov-also">${icons.check} Also covers your ${others.map((x) => LANE_LABEL[x.lane].toLowerCase()).join(' and ')}</p>` : ''}
     </div>`;
+    el.querySelector('[data-ov="start"]')?.addEventListener('click', () => o.ctrl.answer());
     el.querySelector('[data-ov="done"]')!.addEventListener('click', () => o.ctrl.done());
     el.querySelector('[data-ov="snooze"]')!.addEventListener('click', () => o.ctrl.snooze(5));
     el.querySelector('[data-ov="skip"]')!.addEventListener('click', () => o.ctrl.skip());
-    if (!card) el.querySelector<HTMLElement>('[data-ov="done"]')?.focus({ preventScroll: true });
+    if (!card) el.querySelector<HTMLElement>(b.ringing ? '[data-ov="start"]' : '[data-ov="done"]')?.focus({ preventScroll: true });
     refresh(Date.now());
   }
 
   function refresh(now: number) {
     if (!el || !current || el.dataset.state === 'done') return;
     const b = current;
-    const total = b.end - b.start;
-    const left = b.end - now;
+    const total = b.phase.sec * 1000;
+    const left = breakLeft(b, now);
     setRing(el.querySelector('.ov-stage .ring'), left / total);
     const count = el.querySelector('[data-bind="ov-count"]');
     if (count) count.textContent = clock(left);
@@ -96,7 +99,7 @@ export function createOverlay(o: { ctrl: Controller; settings: () => Settings; c
     const steps = exercises.flatMap((ex) => ex.steps.map((step, i) => ({ ex, step, i })));
     if (!steps.length) return;
     const per = Math.max(5_000, Math.min(20_000, total / steps.length));
-    const idx = Math.min(steps.length - 1, Math.floor((now - b.start) / per)) % steps.length;
+    const idx = b.ringing ? 0 : Math.min(steps.length - 1, Math.floor((now - b.start) / per)) % steps.length;
     if (idx !== stepIdx) {
       stepIdx = idx;
       const { ex, step, i } = steps[idx];

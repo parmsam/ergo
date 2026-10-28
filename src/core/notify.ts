@@ -17,6 +17,8 @@ export interface NotifyOptions {
   tag: string;
   /** Stay on screen until dismissed (used when escalating). */
   sticky?: boolean;
+  /** Alert again when replacing a notification with the same tag. */
+  renotify?: boolean;
   actions?: { action: string; title: string }[];
 }
 
@@ -35,7 +37,7 @@ export async function notify(title: string, o: NotifyOptions) {
   const reg = await registration();
   try {
     if (reg) {
-      await reg.showNotification(title, { body: o.body, tag: o.tag, icon, badge: icon, requireInteraction: o.sticky, actions: o.actions } as NotificationOptions);
+      await reg.showNotification(title, { body: o.body, tag: o.tag, icon, badge: icon, requireInteraction: o.sticky, renotify: o.renotify, actions: o.actions } as NotificationOptions);
       return;
     }
     const n = new Notification(title, { body: o.body, tag: o.tag, icon, requireInteraction: o.sticky });

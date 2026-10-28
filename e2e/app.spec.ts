@@ -248,3 +248,20 @@ test('the logo blinks only while reminders run', async ({ page }) => {
   await page.getByRole('button', { name: 'End day' }).click();
   await expect.poll(blinking).toBe('none');
 });
+
+test('ring until I respond: the break waits for Start, then counts down', async ({ page }) => {
+  await open(page, { settings: { ...quiet.settings, ringUntilAnswered: true, bodyRule: 'off' } });
+  await page.getByRole('button', { name: 'Start reminders' }).click();
+  await page.clock.fastForward('20:00');
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByText('Ringing until you respond')).toBeVisible({ timeout: 4000 });
+  await page.clock.runFor(30_000); // well past the 20 s break: it's still waiting
+  await expect(dialog.locator('[data-bind="ov-count"]')).toHaveText('0:20');
+  await expect(page).toHaveTitle('🔔 Look far · ergo');
+  await dialog.getByRole('button', { name: /Start/ }).click();
+  await expect(dialog.getByText('Ringing until you respond')).toBeHidden();
+  await page.clock.fastForward('00:05');
+  await expect(dialog.locator('[data-bind="ov-count"]')).not.toHaveText('0:20');
+  await dialog.getByRole('button', { name: /Done/ }).click();
+  await expect(dialog).toBeHidden({ timeout: 4000 });
+});

@@ -1,5 +1,5 @@
 // Imported into the generated service worker. Clicking a notification focuses ergo;
-// action buttons (Done / Snooze) are forwarded to the open page.
+// action buttons (Done / Start / Snooze) are forwarded to the open page.
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const action = event.action || 'open';
@@ -10,8 +10,8 @@ self.addEventListener('notificationclick', (event) => {
       const client = all[0];
       if (client) {
         client.postMessage({ type: 'ergo-notification', action, tag });
-        if (action === 'open' && 'focus' in client) await client.focus();
-      } else if (action === 'open') {
+        if ((action === 'open' || action === 'start') && 'focus' in client) await client.focus();
+      } else if (action === 'open' || action === 'start') {
         await self.clients.openWindow(self.registration.scope);
       }
     })(),

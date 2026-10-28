@@ -22,6 +22,7 @@ export const DEFAULT_SETTINGS: Settings = {
   bodyResetsEye: true,
   awayMin: 5,
   escalate: true,
+  ringUntilAnswered: false,
   overlay: 'full',
   theme: 'auto',
   autoStart: false,

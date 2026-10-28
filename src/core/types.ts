@@ -62,6 +62,8 @@ export interface Settings {
   awayMin: number;
   /** Make the next break more prominent after repeated skips. */
   escalate: boolean;
+  /** Breaks keep chiming, and wait, until you respond (or RING_MAX passes). */
+  ringUntilAnswered: boolean;
   overlay: 'full' | 'card';
   theme: 'auto' | 'dark' | 'light';
   autoStart: boolean;

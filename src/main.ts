@@ -1,7 +1,7 @@
 import './styles.css';
 import { audioReady, playNow, scheduleTones, setRingWhenSilenced, syncSession, unlockAudio, wasScheduled } from './core/audio';
 import { coach } from './core/coach';
-import { createController, type ActiveBreak } from './core/controller';
+import { breakLeft, createController, type ActiveBreak } from './core/controller';
 import { clock } from './core/format';
 import { NUDGES, trackOn } from './core/rules';
 import { dayKey, skipRun, summarize } from './core/stats';
@@ -53,13 +53,17 @@ const ctrl = createController(store, {
       void notify(`${b.phase.label} · ${LANE_TITLE[b.lane]}`, {
         body: b.phase.prompt ?? '',
         tag: `ergo-${b.lane}`,
-        sticky: b.escalated,
+        sticky: b.escalated || b.ringing,
         actions: [
-          { action: 'done', title: 'Done' },
+          b.ringing ? { action: 'start', title: 'Start' } : { action: 'done', title: 'Done' },
           { action: 'snooze', title: 'Snooze 5 min' },
         ],
       });
     title();
+  },
+  breakAnswered() {
+    overlay.open();
+    for (const b of ctrl.activeBreaks()) void closeNotifications(`ergo-${b.lane}`);
   },
   breakEnd(b, status) {
     overlay.ended(b, status);
@@ -101,10 +105,29 @@ const ctrl = createController(store, {
     syncSession(now);
     if (view === 'today') tickToday(viewRoot(), app, now);
     overlay.refresh(now);
+    renotify(now);
     pip.update();
     title(now);
   },
 });
+
+/** While a break rings in a hidden tab, re-post its notification each minute so it alerts again. */
+let lastRenotify = 0;
+function renotify(now: number) {
+  const b = ctrl.activeBreaks().find((x) => x.ringing);
+  if (!b || !store.get().settings.notify || document.visibilityState === 'visible' || now - b.start < 60_000 || now - lastRenotify < 60_000) return;
+  lastRenotify = now;
+  void notify(`${b.phase.label} · ${LANE_TITLE[b.lane]}`, {
+    body: `Still waiting: ${b.phase.prompt ?? ''}`,
+    tag: `ergo-${b.lane}`,
+    sticky: true,
+    renotify: true,
+    actions: [
+      { action: 'start', title: 'Start' },
+      { action: 'snooze', title: 'Snooze 5 min' },
+    ],
+  });
+}
 
 const overlay = createOverlay({ ctrl, settings: () => store.get().settings, coachLine });
 
@@ -129,7 +152,7 @@ function pipState(): PipState {
     running: s.running,
     paused: s.pausedAt != null,
     lanes,
-    brk: b && (b.lane === 'eye' || b.lane === 'body') ? { lane: b.lane, label: b.phase.label, time: clock(b.end - now), frac: (b.end - now) / (b.end - b.start) } : null,
+    brk: b && (b.lane === 'eye' || b.lane === 'body') ? { lane: b.lane, label: b.phase.label, time: clock(breakLeft(b, now)), frac: breakLeft(b, now) / (b.phase.sec * 1000) } : null,
   };
 }
 
@@ -228,7 +251,8 @@ function status() {
 function title(now = Date.now()) {
   const s = store.get().session;
   const active = ctrl.activeBreaks()[0];
-  if (active) document.title = `${active.phase.label} ${clock(active.end - now)} · ergo`;
+  if (active?.ringing) document.title = `🔔 ${active.phase.label} · ergo`;
+  else if (active) document.title = `${active.phase.label} ${clock(breakLeft(active, now))} · ergo`;
   else if (!s.running) document.title = 'ergo';
   else {
     // Paused keeps the lane icons and frozen times, so the tab still reads as ergo at a glance.
@@ -261,7 +285,8 @@ function onKey(e: KeyboardEvent) {
   if (k === ' ' && !t.closest('button, a')) {
     e.preventDefault();
     toggleRunning();
-  } else if (k === 'd' && inBreak) ctrl.done();
+  } else if (k === 'enter' && inBreak && !t.closest('button, a')) ctrl.answer();
+  else if (k === 'd' && inBreak) ctrl.done();
   else if (k === 'z' && inBreak) ctrl.snooze(5);
   else if (k === 's' && inBreak) ctrl.skip();
   else if (k === 'e') ctrl.breakNow('eye');
@@ -342,6 +367,7 @@ navigator.serviceWorker?.addEventListener('message', (e: MessageEvent) => {
   if (d?.type !== 'ergo-notification') return;
   ctrl.markSeen();
   if (d.action === 'done') ctrl.done();
+  else if (d.action === 'start' || d.action === 'open') ctrl.answer();
   else if (d.action === 'snooze') ctrl.snooze(5);
 });
 

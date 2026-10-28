@@ -2,6 +2,11 @@
 
 All notable changes to ergo. Versions follow [semver](https://semver.org); the version in `package.json` is shown in the app header and in Settings → About.
 
+## [0.7.0] - 2026-10-28
+
+### Added
+- **Ring until I respond** (Settings → Breaks, off by default). Like an alarm: when a break is due the chime repeats every 15 s, the notification stays on screen with Start and Snooze, and the countdown waits until you press Start, Done, Snooze or Skip (or Enter). After 5 min with no answer the break counts as missed. iPhone and iPad pause web audio in the background, so there you get the notification only.
+
 ## [0.6.2] - 2026-10-28
 
 ### Fixed

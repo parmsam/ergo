@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createController, type Effects } from './controller';
+import { breakLeft, createController, RING_EVERY, RING_MAX, type Effects } from './controller';
 import { DEFAULT_SESSION, DEFAULT_SETTINGS, mergeSettings } from './storage';
 import { createStore } from './store';
 
@@ -14,7 +14,7 @@ function setup(over: Partial<typeof DEFAULT_SETTINGS> = {}) {
     days: {},
     checklist: {},
   });
-  const fx: Effects = { breakStart: vi.fn(), breakEnd: vi.fn(), cue: vi.fn(), cueEnd: vi.fn(), away: vi.fn(), tones: vi.fn(), tick: vi.fn() };
+  const fx: Effects = { breakStart: vi.fn(), breakAnswered: vi.fn(), breakEnd: vi.fn(), cue: vi.fn(), cueEnd: vi.fn(), away: vi.fn(), tones: vi.fn(), tick: vi.fn() };
   const ctrl = createController(store, fx);
   /** Tick once a second from `from` to `to` (ms since T0). */
   const run = (from: number, to: number, step = 1000) => {
@@ -156,5 +156,58 @@ describe('controller', () => {
     ctrl.settingsChanged(before, T0 + 5 * MIN);
     expect(ctrl.stateOf('eye', T0 + 5 * MIN)!.remaining).toBe(30 * MIN);
     expect(ctrl.stateOf('body', T0 + 5 * MIN)!.remaining).toBe(15 * MIN);
+  });
+
+  describe('ring until answered', () => {
+    it('holds the break until answered, then counts down from the answer', () => {
+      const { ctrl, fx, store, run } = setup({ ringUntilAnswered: true });
+      ctrl.start(T0);
+      run(1000, 22 * MIN);
+      const [b] = ctrl.activeBreaks();
+      expect(b).toMatchObject({ lane: 'eye', ringing: true });
+      expect(breakLeft(b, T0 + 22 * MIN)).toBe(20_000);
+      expect(ctrl.stateOf('eye', T0 + 22 * MIN)).toMatchObject({ elapsed: 0 });
+      expect(store.get().log.filter((e) => e.kind === 'break')).toEqual([]);
+
+      ctrl.answer(undefined, T0 + 22 * MIN);
+      expect(fx.breakAnswered).toHaveBeenCalledTimes(1);
+      expect(ctrl.activeBreaks()[0]).toMatchObject({ ringing: false, start: T0 + 22 * MIN, end: T0 + 22 * MIN + 20_000 });
+      run(22 * MIN + 1000, 22 * MIN + 21_000);
+      expect(store.get().log.filter((e) => e.kind === 'break')).toEqual([expect.objectContaining({ lane: 'eye', status: 'done', sec: 20, t: T0 + 22 * MIN })]);
+      // The next eye break is 20 min after this one ended, not after the original slot.
+      expect(ctrl.stateOf('eye', T0 + 22 * MIN + 21_000)).toMatchObject({ elapsed: 1000 });
+    });
+
+    it('gives up after RING_MAX, logs missed and carries on', () => {
+      const { ctrl, store, run } = setup({ ringUntilAnswered: true });
+      ctrl.start(T0);
+      run(1000, 20 * MIN + RING_MAX);
+      expect(ctrl.activeBreaks().filter((b) => b.lane === 'eye')).toEqual([]);
+      expect(store.get().log.find((e) => e.lane === 'eye')).toMatchObject({ status: 'missed', sec: 0 });
+      expect(ctrl.stateOf('eye', T0 + 20 * MIN + RING_MAX)).toMatchObject({ elapsed: 0, phase: expect.objectContaining({ kind: 'work' }) });
+    });
+
+    it('pre-schedules repeat chimes after each break and drops them once answered', () => {
+      const { ctrl, fx, run } = setup({ ringUntilAnswered: true, bodyRule: 'off' });
+      ctrl.start(T0);
+      const first = (fx.tones as ReturnType<typeof vi.fn>).mock.lastCall![0] as { at: number; tone: string }[];
+      expect(first.filter((e) => e.at > T0 + 20 * MIN && e.at < T0 + 20 * MIN + RING_MAX)).toHaveLength(RING_MAX / RING_EVERY - 1);
+      expect(first.some((e) => e.tone === 'end')).toBe(false);
+      run(1000, 20 * MIN + 30_000);
+      ctrl.answer(undefined, T0 + 20 * MIN + 30_000);
+      const after = (fx.tones as ReturnType<typeof vi.fn>).mock.lastCall![0] as { at: number; tone: string }[];
+      expect(after[0]).toEqual({ at: T0 + 20 * MIN + 50_000, tone: 'end' });
+      expect(after[1].at).toBe(T0 + 40 * MIN + 50_000);
+    });
+
+    it('done and snooze work on a ringing break; a break you start yourself does not ring', () => {
+      const { ctrl, store, run } = setup({ ringUntilAnswered: true });
+      ctrl.start(T0);
+      run(1000, 20 * MIN + 5000);
+      ctrl.done('eye', T0 + 20 * MIN + 5000);
+      expect(store.get().log.find((e) => e.lane === 'eye')).toMatchObject({ status: 'done', sec: 0 });
+      ctrl.breakNow('eye', T0 + 21 * MIN);
+      expect(ctrl.activeBreaks().find((b) => b.lane === 'eye')).toMatchObject({ ringing: false });
+    });
   });
 });
