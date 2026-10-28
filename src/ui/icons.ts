@@ -31,8 +31,10 @@ export const icons = {
 export const logo = (size = 28) =>
   `<svg class="logo" width="${size}" height="${size}" viewBox="0 0 64 64" aria-hidden="true">
     <rect width="64" height="64" rx="16" fill="var(--logo-bg)"/>
+    <g class="logo-lid">
     <path class="logo-eye" d="M7 32c6.5-10 15-15 25-15s18.5 5 25 15c-6.5 10-15 15-25 15S13.5 42 7 32Z" fill="none" stroke="var(--eye)" stroke-width="4" stroke-linejoin="round"/>
     <circle cx="32" cy="32" r="9.5" fill="none" stroke="var(--eye)" stroke-opacity=".22" stroke-width="4"/>
     <circle class="logo-arc" cx="32" cy="32" r="9.5" fill="none" stroke="var(--body)" stroke-width="4" stroke-linecap="round" stroke-dasharray="44 60" transform="rotate(-90 32 32)"/>
     <circle cx="32" cy="32" r="3.2" fill="var(--text)"/>
+    </g>
   </svg>`;

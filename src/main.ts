@@ -220,6 +220,7 @@ function status() {
   if (!el) return;
   const s = store.get().session;
   const state = !s.running ? ['', 'Off'] : s.pausedAt ? ['paused', 'Paused'] : ['on', 'Running'];
+  document.documentElement.dataset.run = state[0] || 'off';
   el.innerHTML = `<span class="status-dot ${state[0]}"></span><span class="status-text">${state[1]}</span>`;
   el.title = state[1];
 }

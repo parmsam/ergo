@@ -199,6 +199,24 @@ body.in-break .glow {
   border-radius: 9px;
   box-shadow: 0 6px 20px -8px var(--eye);
 }
+/* The logo blinks while reminders run: ergo is keeping time for your eyes. Paused or off, it stays open. */
+.logo-lid {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+[data-run='on'] .brand .logo-lid {
+  animation: logo-blink 7s ease-in-out 2s infinite;
+}
+@keyframes logo-blink {
+  0%,
+  95%,
+  100% {
+    transform: scaleY(1);
+  }
+  96.5% {
+    transform: scaleY(0.08);
+  }
+}
 .ver {
   font-size: 0.72rem;
   color: var(--faint);

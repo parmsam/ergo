@@ -1,6 +1,6 @@
 {
   "name": "ergo",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "private": true,
   "description": "Evidence-based break reminders for your eyes and posture: look away, stand up, move. A PWA.",
   "type": "module",

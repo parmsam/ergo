@@ -237,3 +237,13 @@ test('one timer only: turning the eye rule off leaves a single body lane', async
   await page.getByRole('button', { name: 'Start reminders' }).click();
   await expect(page.locator('.lane.body .time')).toHaveText('20:00');
 });
+
+test('the logo blinks only while reminders run', async ({ page }) => {
+  await open(page, quiet);
+  const blinking = () => page.locator('.brand .logo-lid').evaluate((el) => getComputedStyle(el).animationName);
+  expect(await blinking()).toBe('none');
+  await page.getByRole('button', { name: 'Start reminders' }).click();
+  await expect.poll(blinking).toBe('logo-blink');
+  await page.getByRole('button', { name: 'End day' }).click();
+  await expect.poll(blinking).toBe('none');
+});

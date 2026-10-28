@@ -2,6 +2,11 @@
 
 All notable changes to ergo. Versions follow [semver](https://semver.org); the version in `package.json` is shown in the app header and in Settings → About.
 
+## [0.6.1] - 2026-10-27
+
+### Added
+- The eye logo in the header blinks every few seconds while reminders are running. Paused or off, it stays open. No blinking with reduced motion.
+
 ## [0.6.0] - 2026-10-27
 
 ### Added
