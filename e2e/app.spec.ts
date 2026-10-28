@@ -134,6 +134,22 @@ test('header icons navigate between pages', async ({ page }) => {
   }
 });
 
+test('settings rule dropdowns show short names, with the chosen rule described in the hint', async ({ page }) => {
+  await open(page, quiet, '#settings');
+  const eye = page.getByRole('combobox', { name: 'Eye rule' });
+  await expect(eye.locator('option:checked')).toHaveText('20-20-20');
+  await eye.selectOption('30-30-30');
+  await expect(page.locator('.field', { hasText: 'Every 30 min, look 30 ft away for 30 s' })).toBeVisible();
+});
+
+test('break actions fit on screen without scrolling', async ({ page }) => {
+  await open(page, quiet);
+  await page.getByRole('button', { name: 'Start reminders' }).click();
+  await page.getByRole('button', { name: 'Break now' }).nth(1).click();
+  const dialog = page.getByRole('dialog');
+  for (const name of ['Done', '5 min', 'Skip']) await expect(dialog.getByRole('button', { name })).toBeInViewport({ ratio: 1 });
+});
+
 test('no page is wider than the screen', async ({ page }) => {
   await open(page, quiet);
   for (const view of ['today', 'stats', 'guide', 'settings']) {

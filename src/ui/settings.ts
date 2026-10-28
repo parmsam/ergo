@@ -1,6 +1,6 @@
 import { canRingWhenSilenced, playNow } from '../core/audio';
 import { notify, notifyGranted, notifySupported, requestNotify } from '../core/notify';
-import { BODY_RULES, EYE_RULES } from '../core/rules';
+import { BODY_RULES, EYE_RULES, ruleFor } from '../core/rules';
 import { exportBackup, parseBackup } from '../core/storage';
 import type { Settings } from '../core/types';
 import type { AppCtx } from './ctx';
@@ -17,6 +17,11 @@ const field = (label: string, hint: string, control: string) =>
 const num = (key: string, value: number, min: number, max: number, step = 1) =>
   `<input type="number" data-num="${key}" value="${value}" min="${min}" max="${max}" step="${step}" inputmode="numeric"/>`;
 
+/** Controls that sit side by side on the right of a row. */
+const ctl = (...parts: string[]) => `<span class="ctl">${parts.join('')}</span>`;
+/** A number input with its unit, so every number row lines up. */
+const withUnit = (input: string, unit: string) => `${input}<span class="unit">${unit}</span>`;
+
 export function renderSettings(app: AppCtx) {
   const s = app.store.get().settings;
   const perm = !notifySupported() ? 'Not supported in this browser' : Notification.permission === 'granted' ? 'Allowed' : Notification.permission === 'denied' ? 'Blocked in browser settings' : 'Not yet allowed';
@@ -25,16 +30,16 @@ export function renderSettings(app: AppCtx) {
     <div class="card">
       <div class="section-title"><h2>Rules</h2><p><a href="#guide">Compare rules →</a></p></div>
       <div class="form">
-        ${field('Eyes', 'How often to look away', `<select data-sel="eyeRule">${[...EYE_RULES.map((r) => [r.id, `${r.name}: ${r.tagline}`]), ['custom-eye', 'Custom…']]
+        ${field('Eyes', esc(ruleFor(s, 'eye').tagline), `<select data-sel="eyeRule" aria-label="Eye rule">${[...EYE_RULES.map((r) => [r.id, r.name]), ['custom-eye', 'Custom…']]
           .map(([id, l]) => `<option value="${id}" ${s.eyeRule === id ? 'selected' : ''}>${esc(l)}</option>`)
           .join('')}</select>`)}
         ${s.eyeRule === 'custom-eye' ? `<div class="custom-row"><label>Every (min)${num('custom.eye.workMin', s.custom.eye.workMin, 1, 180)}</label><label>Look away (sec)${num('custom.eye.breakSec', s.custom.eye.breakSec, 5, 900, 5)}</label></div>` : ''}
-        ${field('Body', 'Sit / stand / move rhythm', `<select data-sel="bodyRule">${[...BODY_RULES.map((r) => [r.id, `${r.name}: ${r.tagline}`]), ['custom-body', 'Custom…']]
+        ${field('Body', esc(ruleFor(s, 'body').tagline), `<select data-sel="bodyRule" aria-label="Body rule">${[...BODY_RULES.map((r) => [r.id, r.name]), ['custom-body', 'Custom…']]
           .map(([id, l]) => `<option value="${id}" ${s.bodyRule === id ? 'selected' : ''}>${esc(l)}</option>`)
           .join('')}</select>`)}
         ${s.bodyRule === 'custom-body' ? `<div class="custom-row"><label>Sit (min)${num('custom.body.sitMin', s.custom.body.sitMin, 1, 180)}</label><label>Stand (min, 0 = none)${num('custom.body.standMin', s.custom.body.standMin, 0, 120)}</label><label>Move (min)${num('custom.body.moveMin', s.custom.body.moveMin, 1, 30)}</label></div>` : ''}
-        ${field('Exercise snack', `Every ${s.nudges.snack.everyMin} min, one vigorous minute (stairs, brisk walk). Skip it if you have a heart condition unless your doctor says it’s fine.`, `<span style="display:flex;gap:8px;align-items:center">${num('nudges.snack.everyMin', s.nudges.snack.everyMin, 30, 480, 15)}${sw('nudges.snack.on', s.nudges.snack.on)}</span>`)}
-        ${field('Posture reset nudge', `Every ${s.nudges.posture.everyMin} min, shift and reset your position (default interval, not researched)`, `<span style="display:flex;gap:8px;align-items:center">${num('nudges.posture.everyMin', s.nudges.posture.everyMin, 5, 120)}${sw('nudges.posture.on', s.nudges.posture.on)}</span>`)}
+        ${field('Exercise snack', `Every ${s.nudges.snack.everyMin} min, one vigorous minute (stairs, brisk walk). Skip it if you have a heart condition unless your doctor says it’s fine.`, ctl(withUnit(num('nudges.snack.everyMin', s.nudges.snack.everyMin, 30, 480, 15), 'min'), sw('nudges.snack.on', s.nudges.snack.on)))}
+        ${field('Posture reset nudge', `Every ${s.nudges.posture.everyMin} min, shift and reset your position (default interval, not researched)`, ctl(withUnit(num('nudges.posture.everyMin', s.nudges.posture.everyMin, 5, 120), 'min'), sw('nudges.posture.on', s.nudges.posture.on)))}
       </div>
     </div>
 
@@ -45,9 +50,9 @@ export function renderSettings(app: AppCtx) {
         ${field('Honor system', 'A break that runs out without you pressing Skip counts as taken. Turn off to only count breaks you saw in ergo.', sw('trustBreaks', s.trustBreaks))}
         ${field('Moving rests your eyes too', 'A finished body break restarts the eye timer', sw('bodyResetsEye', s.bodyResetsEye))}
         ${field('Gentle escalation', 'After 2 skipped breaks in a row, the next one is full screen with a coaching note', sw('escalate', s.escalate))}
-        ${field('Away threshold', 'If ergo’s own timer stalls this long (laptop asleep), cycles restart fresh. ergo never monitors your keyboard or mouse.', `<span>${num('awayMin', s.awayMin, 2, 60)} min</span>`)}
-        ${field('Daily goal', 'Share of breaks to take for a streak day', `<span>${num('goalPct', s.goalPct, 10, 100, 5)} %</span>`)}
-        ${field('Sitting budget', 'Daily hours of sitting to aim under (Canadian guidelines: 8 or less). 0 hides it.', `<span>${num('sitBudgetH', s.sitBudgetH, 0, 16)} h</span>`)}
+        ${field('Away threshold', 'If ergo’s own timer stalls this long (laptop asleep), cycles restart fresh. ergo never monitors your keyboard or mouse.', ctl(withUnit(num('awayMin', s.awayMin, 2, 60), 'min')))}
+        ${field('Daily goal', 'Share of breaks to take for a streak day', ctl(withUnit(num('goalPct', s.goalPct, 10, 100, 5), '%')))}
+        ${field('Sitting budget', 'Daily hours of sitting to aim under (Canadian guidelines: 8 or less). 0 hides it.', ctl(withUnit(num('sitBudgetH', s.sitBudgetH, 0, 16), 'h')))}
       </div>
     </div>
 
@@ -55,7 +60,7 @@ export function renderSettings(app: AppCtx) {
       <div class="section-title"><h2>Alerts</h2></div>
       <div class="form">
         ${field('Sound', 'Soft chimes when a break starts and ends', sw('sound', s.sound))}
-        ${field('Volume', '', `<span style="display:flex;gap:8px;align-items:center"><input type="range" min="0.1" max="1" step="0.05" data-range="volume" value="${s.volume}"/><button class="btn sm ghost" data-act="test-sound">Test</button></span>`)}
+        ${field('Volume', '', ctl(`<input type="range" min="0.1" max="1" step="0.05" data-range="volume" value="${s.volume}"/>`, `<button class="btn sm ghost" data-act="test-sound">Test</button>`))}
         ${field(
           'Ring when iPhone is silenced',
           canRingWhenSilenced()
@@ -63,7 +68,7 @@ export function renderSettings(app: AppCtx) {
             : 'For iPhone and iPad (Safari, iOS 17 or later). Not available in this browser.',
           sw('ringWhenSilenced', s.ringWhenSilenced),
         )}
-        ${field('System notifications', `So you see breaks while working in other apps. Status: ${perm}`, `<span style="display:flex;gap:8px;align-items:center">${notifyGranted() ? `<button class="btn sm ghost" data-act="test-notify">Test</button>` : `<button class="btn sm" data-act="allow-notify" ${notifySupported() ? '' : 'disabled'}>${icons.bell}Allow</button>`}${sw('notify', s.notify)}</span>`)}
+        ${field('System notifications', `So you see breaks while working in other apps. Status: ${perm}`, ctl(notifyGranted() ? `<button class="btn sm ghost" data-act="test-notify">Test</button>` : `<button class="btn sm" data-act="allow-notify" ${notifySupported() ? '' : 'disabled'}>${icons.bell}Allow</button>`, sw('notify', s.notify)))}
       </div>
     </div>
 

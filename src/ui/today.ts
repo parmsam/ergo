@@ -75,11 +75,11 @@ export function renderToday(app: AppCtx) {
     ? `<button class="btn primary big" data-act="start">${icons.play}Start reminders</button>`
     : paused
       ? `<button class="btn primary big" data-act="resume">${icons.play}Resume</button>
-         <button class="btn ghost" data-act="stop">${icons.stop}End day</button>`
+         <button class="btn ghost big" data-act="stop">${icons.stop}End day</button>`
       : `<div class="pause-menu">
            <button class="btn big" data-act="pause-menu" aria-haspopup="true" aria-expanded="false">${icons.pause}Pause</button>
          </div>
-         <button class="btn ghost" data-act="stop">${icons.stop}End day</button>`;
+         <button class="btn ghost big" data-act="stop">${icons.stop}End day</button>`;
 
   const nudges = (Object.keys(NUDGES) as NudgeId[])
     .map((id) => {

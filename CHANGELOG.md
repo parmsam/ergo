@@ -2,6 +2,18 @@
 
 All notable changes to ergo. Versions follow [semver](https://semver.org); the version in `package.json` is shown in the app header and in Settings → About.
 
+## [0.5.1] - 2026-10-27
+
+### Changed
+- **Settings icon is a gear.** The old one looked like a sun and read as a theme toggle.
+- Settings: rule dropdowns show the short rule name (no more cut-off text), and the chosen rule's description appears under the label. Every number field now shows its unit.
+- Pause and End day are the same size.
+
+### Fixed
+- The full-screen break is now opaque. The Today page's own timers used to show faintly behind it.
+- Phones: Done, 5 min and Skip fit on one row (keyboard hints are hidden on touch screens), and the break no longer runs off the bottom of the screen.
+- Phones: the lane icon no longer squashes, and the evidence badge sits under the rule text instead of squeezing it.
+
 ## [0.5.0] - 2026-10-27
 
 ### Added

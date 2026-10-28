@@ -50,6 +50,10 @@ Inspired by [pomotimer2](https://github.com/parmsam/pomotimer2) (stack, PWA appr
 - [x] Chimes ring through the iPhone silent switch (Audio Session API, held only around each chime)
 - [ ] Confirm on a real iPhone: silent switch on, ergo open, a break chime plays
 
+## v0.5.1 ✅
+
+- [x] UI polish: opaque break screen, break actions fit on phones, gear icon for Settings, short rule names in Settings, units on number fields, matched Pause/End day, lane header on phones
+
 ## Next
 
 - [ ] **Work hours schedule:** auto-start and stop on chosen days and times
