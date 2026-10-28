@@ -54,10 +54,15 @@ Inspired by [pomotimer2](https://github.com/parmsam/pomotimer2) (stack, PWA appr
 
 - [x] UI polish: opaque break screen, break actions fit on phones, gear icon for Settings, short rule names in Settings, units on number fields, matched Pause/End day, lane header on phones
 
+## v0.6.0 ✅
+
+- [x] **Pop-out mini timer** (Document Picture-in-Picture, Chromium) that floats over other windows and handles breaks
+- [x] Full-screen toggle (Fullscreen API)
+- [x] Either track can be switched off (rule "Off") to run one timer only
+
 ## Next
 
 - [ ] **Work hours schedule:** auto-start and stop on chosen days and times
-- [ ] **Pop-out mini timer** (Document Picture-in-Picture, Chromium) that floats over other windows
 - [ ] **Weekly review:** compare this week with last, best and worst times of day for skipping
 - [ ] **Per-exercise preferences:** hide exercises you can't or won't do; favorites
 - [ ] **Break-length nudge:** suggest a longer eye break when eye-break follow-through is high but symptoms persist (user-reported)
@@ -89,6 +94,7 @@ Inspired by [pomotimer2](https://github.com/parmsam/pomotimer2) (stack, PWA appr
 - 2026-10-27 (v0.2.0): Sitting is estimated as running time minus body breaks and confirmed standing. It undercounts sitting away from the computer, and the UI says so.
 - 2026-10-27 (v0.2.0): Exercise snacks are off by default and kept out of the ergo score; the evidence is observational, and vigorous effort isn't for everyone.
 - 2026-10-27 (v0.5.0): Silent-switch audio follows pomotimer2: "playback" session only around each chime (2.5 s before to 2.5 s after), then "auto", so music isn't paused for the whole workday. Switching happens on the tick loop, which runs whenever ergo is on screen; iOS suspends it in the background anyway.
+- 2026-10-27 (v0.6.0): Tracks are optional. A rule of "off" drops that lane in `lanesFor`; turning a track off mid-break ends the break as skipped, the same as changing its rule. The score already reweights a part with nothing to measure.
 - 2026-10-27 (v0.3.0): Eye movement exercises are offered only as one optional step in eye breaks, labelled Mixed evidence. No dedicated reminder, and no claims about vision correction.
 - 2026-10-27 (v0.2.0): Linux WebKit e2e runs with reduced motion; continuous animations plus slow CI rendering kept elements from settling.
 

@@ -1,7 +1,7 @@
 import { coach } from '../core/coach';
 import { cycleMs, untilNext } from '../core/engine';
 import { clock, duration, pct, timeOfDay } from '../core/format';
-import { NUDGES, STRENGTH_LABEL, evidenceUrl, ruleFor } from '../core/rules';
+import { NUDGES, STRENGTH_LABEL, evidenceUrl, ruleFor, trackOn } from '../core/rules';
 import { adherence, dayKey, skipRun, summarize } from '../core/stats';
 import type { NudgeId, Phase, TrackId } from '../core/types';
 import type { AppCtx } from './ctx';
@@ -46,7 +46,8 @@ export function renderToday(app: AppCtx) {
     seed: Math.floor(now / 600_000),
   });
 
-  const lanes = TRACKS.map((t) => {
+  const tracks = TRACKS.filter((t) => trackOn(settings, t.id));
+  const lanes = tracks.map((t) => {
     const rule = ruleFor(settings, t.id);
     return `<article class="lane card ${t.id} ${running ? '' : 'idle'}" data-lane="${t.id}">
       <div class="lane-head">
@@ -103,14 +104,18 @@ export function renderToday(app: AppCtx) {
     ${!running ? `<p class="intro">Start when you sit down to work. ergo reminds you to rest your eyes and change position, and keeps a private record in this browser.</p>` : ''}
     <div class="controls">${controls}</div>
     <p class="paused-note" data-bind="paused" ${paused ? '' : 'hidden'}></p>
-    <div class="lanes section">${lanes}</div>
+    ${
+      tracks.length
+        ? `<div class="lanes section ${tracks.length === 1 ? 'single' : ''}">${lanes}</div>`
+        : `<div class="section card empty-lanes"><p>Both timers are off.</p><button class="btn sm" data-go="settings">Choose a rule in Settings</button></div>`
+    }
     <div class="section nudges">${nudges}</div>
     <div class="section">
       <div class="section-title"><h2>Today</h2><button class="rule-link" data-go="stats">See progress →</button></div>
       <div class="tiles">
-        ${tile('Eye breaks', icons.eye, `${today.eye.done}`, `of ${eyeDue} · ${pct(adherence(today.eye))}`, adherence(today.eye), 'eye')}
-        ${tile('Body breaks', icons.walk, `${today.body.done}`, `of ${bodyDue} · ${pct(adherence(today.body))}`, adherence(today.body), 'body')}
-        ${tile('Stood up', icons.stand, `${today.stand.done}`, `of ${today.stand.shown} cues`, today.stand.shown ? today.stand.done / today.stand.shown : null, 'body')}
+        ${trackOn(settings, 'eye') ? tile('Eye breaks', icons.eye, `${today.eye.done}`, `of ${eyeDue} · ${pct(adherence(today.eye))}`, adherence(today.eye), 'eye') : ''}
+        ${trackOn(settings, 'body') ? tile('Body breaks', icons.walk, `${today.body.done}`, `of ${bodyDue} · ${pct(adherence(today.body))}`, adherence(today.body), 'body') : ''}
+        ${trackOn(settings, 'body') ? tile('Stood up', icons.stand, `${today.stand.done}`, `of ${today.stand.shown} cues`, today.stand.shown ? today.stand.done / today.stand.shown : null, 'body') : ''}
         ${
           settings.sitBudgetH
             ? tile('Sitting (est.)', icons.chart, duration(today.sittingSec), `of ${settings.sitBudgetH}h budget`, Math.min(1, today.sittingSec / (settings.sitBudgetH * 3600)), today.sittingSec > settings.sitBudgetH * 3600 ? 'bad' : 'eye')
@@ -171,32 +176,40 @@ export function bindToday(root: HTMLElement, app: AppCtx) {
   });
 }
 
+/** What a lane's countdown shows right now. Shared by the Today page and the pop-out mini timer. */
+export function laneView(app: AppCtx, id: TrackId, now: number) {
+  const { settings, session } = app.store.get();
+  const st = app.ctrl.stateOf(id, now);
+  if (!st) return null;
+  const phases = ruleFor(settings, id).phases;
+  const next = phases[(st.index + 1) % phases.length];
+  let frac = st.progress;
+  let sub = '';
+  if (st.phase.kind === 'work') {
+    // Count down to whatever interrupts the work phase next.
+    sub = untilLabel(next);
+  } else if (st.phase.kind === 'cue') {
+    sub = `${st.phase.label.toLowerCase()} · then ${next.label.toLowerCase()}`;
+  } else {
+    frac = 1 - st.progress;
+    sub = st.phase.label.toLowerCase() + ' now';
+  }
+  return { kind: st.phase.kind, time: clock(st.remaining), sub: session.pausedAt ? 'paused' : sub, frac, cycleProgress: st.cycleProgress };
+}
+
 export function tickToday(root: HTMLElement, app: AppCtx, now: number) {
   const { settings, session } = app.store.get();
   if (!session.running) return;
   for (const t of TRACKS) {
     const card = $(`.lane[data-lane="${t.id}"]`, root);
-    const st = app.ctrl.stateOf(t.id, now);
-    if (!card || !st) continue;
-    const phases = ruleFor(settings, t.id).phases;
-    const next = phases[(st.index + 1) % phases.length];
-    card.dataset.kind = st.phase.kind;
-    let frac = st.progress;
-    let sub = '';
-    if (st.phase.kind === 'work') {
-      // Count down to whatever interrupts the work phase next.
-      sub = untilLabel(next);
-    } else if (st.phase.kind === 'cue') {
-      sub = `${st.phase.label.toLowerCase()} · then ${next.label.toLowerCase()}`;
-    } else {
-      frac = 1 - st.progress;
-      sub = st.phase.label.toLowerCase() + ' now';
-    }
-    $('[data-bind="time"]', card)!.textContent = clock(st.remaining);
-    $('[data-bind="sub"]', card)!.textContent = session.pausedAt ? 'paused' : sub;
-    setRing($('.ring', card), frac);
+    const v = laneView(app, t.id, now);
+    if (!card || !v) continue;
+    card.dataset.kind = v.kind;
+    $('[data-bind="time"]', card)!.textContent = v.time;
+    $('[data-bind="sub"]', card)!.textContent = v.sub;
+    setRing($('.ring', card), v.frac);
     const marker = $('[data-bind="marker"]', card);
-    if (marker) marker.style.left = `${(st.cycleProgress * 100).toFixed(2)}%`;
+    if (marker) marker.style.left = `${(v.cycleProgress * 100).toFixed(2)}%`;
   }
   for (const id of Object.keys(NUDGES) as NudgeId[]) {
     const el = $(`[data-bind="nudge-${id}"]`, root);

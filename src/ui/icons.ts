@@ -22,6 +22,9 @@ export const icons = {
   flame: svg('<path d="M12 21.5c-4 0-7-2.7-7-6.5 0-3.5 2.5-5.5 4-8 .5 2 1.5 3 3 3.5-.5-3 1-6 3.5-8 0 4 3.5 6.5 3.5 11.5 0 4.3-3 7.5-7 7.5Z"/>'),
   link: svg('<path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/>'),
   bell: svg('<path d="M6 16.5V11a6 6 0 1 1 12 0v5.5l1.5 2h-15l1.5-2ZM10 21h4"/>'),
+  expand: svg('<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>'),
+  collapse: svg('<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>'),
+  popout: svg('<rect x="3" y="5" width="18" height="14" rx="2.5"/><rect x="12" y="11" width="7" height="6" rx="1.2" fill="currentColor" stroke="none"/>'),
   x: svg('<path d="M6 6l12 12M18 6 6 18"/>'),
 };
 

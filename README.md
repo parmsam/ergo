@@ -38,7 +38,7 @@ Short, regular breaks help both. ergo runs two independent cycles, one for your 
 
 ## Features
 
-- **Two tracks at once.** An eye track (look far) and a body track (stand up, move), each with its own rule and timeline. A body break also counts as an eye break.
+- **Two tracks, or just one.** An eye track (look far) and a body track (stand up, move), each with its own rule and timeline. A body break also counts as an eye break. Set either track's rule to **Off** to run only the other.
 - **Evidence-labeled rules.** Every rule shows how well it's supported, links to a sourced write-up in [`evidence/`](evidence/), and the honest caveats.
 
   | Track | Rule | What it does | Evidence |
@@ -61,6 +61,7 @@ Short, regular breaks help both. ergo runs two independent cycles, one for your 
 - **Workstation checklist.** Twelve sourced setup items (screen distance and height, glare, chair, sit-stand, eye exams). Your progress feeds the score.
 - **Progress.** A daily **ergo score**, a streak, and 7-day charts of breaks taken and screen time, with a table view and a full break log.
 - **Reliable timing.** Cycles are derived from timestamps, not countdowns. Ticks run in a Web Worker, and chimes are scheduled on the audio clock, so background tabs don't drift. If your laptop sleeps, ergo treats it as a break and restarts fresh.
+- **Pop-out mini timer and full screen.** In Chrome and Edge, pop both countdowns into a small always-on-top window that also handles breaks (Done/Skip). Full screen works wherever the browser allows it.
 - **Meetings.** Pause for 15/30/60 min with auto-resume, or until you resume.
 - **Installable and offline.** A PWA with system notifications (with Done/Snooze actions where supported).
 - **Private by design.** Everything stays in `localStorage`, with JSON export/import. ergo **never** monitors your keyboard, mouse or system activity.
@@ -77,6 +78,8 @@ Short, regular breaks help both. ergo runs two independent cycles, one for your 
 | <kbd>Space</kbd> | Start / pause / resume |
 | <kbd>E</kbd> / <kbd>B</kbd> | Eye break / body break now |
 | <kbd>D</kbd> · <kbd>Z</kbd> · <kbd>S</kbd> | Done · snooze 5 min · skip (during a break) |
+| <kbd>P</kbd> | Pop out mini timer (Chrome, Edge) |
+| <kbd>F</kbd> | Full screen |
 | <kbd>1</kbd>–<kbd>4</kbd> | Today · Progress · Guide · Settings |
 | <kbd>?</kbd> | Help |
 

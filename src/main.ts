@@ -3,7 +3,7 @@ import { audioReady, playNow, scheduleTones, setRingWhenSilenced, syncSession, u
 import { coach } from './core/coach';
 import { createController, type ActiveBreak } from './core/controller';
 import { clock } from './core/format';
-import { NUDGES } from './core/rules';
+import { NUDGES, trackOn } from './core/rules';
 import { dayKey, skipRun, summarize } from './core/stats';
 import { createStore } from './core/store';
 import { closeNotifications, notify, notifyGranted, requestNotify } from './core/notify';
@@ -12,12 +12,14 @@ import type { AppCtx, View } from './ui/ctx';
 import { $ } from './ui/dom';
 import { bindGuide, renderGuide } from './ui/guide';
 import { icons, logo } from './ui/icons';
+import { createFullscreenButton, fullscreenSupported } from './ui/fullscreen';
 import { createOverlay } from './ui/overlay';
+import { createPip, pipSupported, type PipState } from './ui/pip';
 import { setupPwa } from './ui/pwa';
 import { bindSettings, renderSettings } from './ui/settings';
 import { bindStats, renderStats } from './ui/stats';
 import { dismissToast, toast } from './ui/toast';
-import { bindToday, renderToday, tickToday } from './ui/today';
+import { bindToday, laneView, renderToday, tickToday } from './ui/today';
 
 const store = createStore();
 const VIEWS: { id: View; label: string; icon: string }[] = [
@@ -99,11 +101,51 @@ const ctrl = createController(store, {
     syncSession(now);
     if (view === 'today') tickToday(viewRoot(), app, now);
     overlay.refresh(now);
+    pip.update();
     title(now);
   },
 });
 
 const overlay = createOverlay({ ctrl, settings: () => store.get().settings, coachLine });
+
+/** Start, pause or resume, from Space or the pop-out. */
+function toggleRunning() {
+  const s = store.get().session;
+  if (!s.running) app.actions.start();
+  else if (s.pausedAt) ctrl.resume();
+  else ctrl.pause(null);
+  render(false);
+}
+
+function pipState(): PipState {
+  const now = Date.now();
+  const s = store.get().session;
+  const b = ctrl.activeBreaks().sort((x, y) => y.end - x.end)[0];
+  const lanes = (['eye', 'body'] as const).filter((id) => trackOn(store.get().settings, id)).map((id) => {
+    const v = laneView(app, id, now);
+    return { id, title: id === 'eye' ? 'Eyes' : 'Posture & movement', time: v?.time ?? '–', sub: v?.sub ?? '', frac: v?.frac ?? 0 };
+  });
+  return {
+    running: s.running,
+    paused: s.pausedAt != null,
+    lanes,
+    brk: b && (b.lane === 'eye' || b.lane === 'body') ? { lane: b.lane, label: b.phase.label, time: clock(b.end - now), frac: (b.end - now) / (b.end - b.start) } : null,
+  };
+}
+
+const pip = createPip({
+  getState: pipState,
+  toggle: toggleRunning,
+  done: () => ctrl.done(),
+  skip: () => ctrl.skip(),
+  onClose: () => $('[data-act="pip"]')?.setAttribute('aria-pressed', 'false'),
+});
+
+function togglePip() {
+  if (!pipSupported()) return toast('The pop-out timer works in Chrome and Edge.', { icon: 'bell' });
+  pip.toggle();
+  $('[data-act="pip"]')?.setAttribute('aria-pressed', String(!pip.isOpen()));
+}
 
 const app: AppCtx = {
   store,
@@ -142,6 +184,11 @@ function shell() {
       <a class="ver" href="https://github.com/parmsam/ergo/blob/main/CHANGELOG.md" target="_blank" rel="noopener" title="What’s new">v${__APP_VERSION__}</a>
       <span class="spacer"></span>
       <span class="chip" data-bind="status"></span>
+      ${
+        pipSupported() || fullscreenSupported()
+          ? `<div class="top-nav top-tools" role="group" aria-label="View">${pipSupported() ? `<button class="top-link" data-act="pip" aria-label="Pop out mini timer" title="Pop out mini timer (P)" aria-pressed="false">${icons.popout}</button>` : ''}<button class="top-link" data-act="fullscreen"></button></div>`
+          : ''
+      }
       <nav class="top-nav" aria-label="Pages">${VIEWS.map((v) => `<a class="top-link" href="#${v.id}" data-view="${v.id}" aria-label="${v.label}" title="${v.label} (${VIEWS.indexOf(v) + 1})">${v.icon}</a>`).join('')}</nav>
     </header>
     <main id="view"></main>
@@ -165,6 +212,7 @@ function render(animate: boolean) {
   if (!animate) window.scrollTo(0, y);
   status();
   ctrl.tick();
+  pip.update();
 }
 
 function status() {
@@ -185,7 +233,7 @@ function title(now = Date.now()) {
   else {
     const e = ctrl.stateOf('eye', now);
     const b = ctrl.stateOf('body', now);
-    document.title = `👁 ${e ? clock(e.remaining) : '–'} · 🧍 ${b ? clock(b.remaining) : '–'}`;
+    document.title = [e && `👁 ${clock(e.remaining)}`, b && `🧍 ${clock(b.remaining)}`].filter(Boolean).join(' · ') || 'ergo';
   }
 }
 
@@ -206,21 +254,19 @@ function onKey(e: KeyboardEvent) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   const t = e.target as HTMLElement;
   if (t.closest('input, select, textarea, [contenteditable]')) return;
-  const s = store.get().session;
   const inBreak = ctrl.activeBreaks().length > 0;
   const k = e.key.toLowerCase();
   if (k === ' ' && !t.closest('button, a')) {
     e.preventDefault();
-    if (!s.running) app.actions.start();
-    else if (s.pausedAt) ctrl.resume();
-    else ctrl.pause(null);
-    render(false);
+    toggleRunning();
   } else if (k === 'd' && inBreak) ctrl.done();
   else if (k === 'z' && inBreak) ctrl.snooze(5);
   else if (k === 's' && inBreak) ctrl.skip();
   else if (k === 'e') ctrl.breakNow('eye');
   else if (k === 'b') ctrl.breakNow('body');
   else if (['1', '2', '3', '4'].includes(k)) app.go(VIEWS[Number(k) - 1].id);
+  else if (k === 'p') togglePip();
+  else if (k === 'f') void fullscreen.toggle();
   else if (k === '?') help();
 }
 
@@ -236,6 +282,8 @@ function help() {
       <kbd>D</kbd><span>Done (during a break)</span>
       <kbd>Z</kbd><span>Snooze 5 min</span>
       <kbd>S</kbd><span>Skip</span>
+      <kbd>P</kbd><span>Pop out mini timer (Chrome, Edge)</span>
+      <kbd>F</kbd><span>Full screen</span>
       <kbd>1</kbd>–<kbd>4</kbd><span>Today · Progress · Guide · Settings</span>
     </div><form method="dialog"><button class="btn">Close</button></form>`;
     document.body.append(d);
@@ -265,6 +313,8 @@ function urlActions() {
 applyTheme();
 applyAudioPrefs();
 shell();
+const fullscreen = createFullscreenButton($<HTMLButtonElement>('[data-act="fullscreen"]') ?? document.createElement('button'));
+$('[data-act="pip"]')?.addEventListener('click', togglePip);
 render(true);
 window.addEventListener('hashchange', () => {
   view = viewFromHash();

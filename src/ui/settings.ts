@@ -1,6 +1,6 @@
 import { canRingWhenSilenced, playNow } from '../core/audio';
 import { notify, notifyGranted, notifySupported, requestNotify } from '../core/notify';
-import { BODY_RULES, EYE_RULES, ruleFor } from '../core/rules';
+import { BODY_RULES, EYE_RULES, ruleFor, trackOn } from '../core/rules';
 import { exportBackup, parseBackup } from '../core/storage';
 import type { Settings } from '../core/types';
 import type { AppCtx } from './ctx';
@@ -30,11 +30,11 @@ export function renderSettings(app: AppCtx) {
     <div class="card">
       <div class="section-title"><h2>Rules</h2><p><a href="#guide">Compare rules →</a></p></div>
       <div class="form">
-        ${field('Eyes', esc(ruleFor(s, 'eye').tagline), `<select data-sel="eyeRule" aria-label="Eye rule">${[...EYE_RULES.map((r) => [r.id, r.name]), ['custom-eye', 'Custom…']]
+        ${field('Eyes', trackOn(s, 'eye') ? esc(ruleFor(s, 'eye').tagline) : 'Off: no eye breaks', `<select data-sel="eyeRule" aria-label="Eye rule">${[...EYE_RULES.map((r) => [r.id, r.name]), ['custom-eye', 'Custom…'], ['off', 'Off']]
           .map(([id, l]) => `<option value="${id}" ${s.eyeRule === id ? 'selected' : ''}>${esc(l)}</option>`)
           .join('')}</select>`)}
         ${s.eyeRule === 'custom-eye' ? `<div class="custom-row"><label>Every (min)${num('custom.eye.workMin', s.custom.eye.workMin, 1, 180)}</label><label>Look away (sec)${num('custom.eye.breakSec', s.custom.eye.breakSec, 5, 900, 5)}</label></div>` : ''}
-        ${field('Body', esc(ruleFor(s, 'body').tagline), `<select data-sel="bodyRule" aria-label="Body rule">${[...BODY_RULES.map((r) => [r.id, r.name]), ['custom-body', 'Custom…']]
+        ${field('Body', trackOn(s, 'body') ? esc(ruleFor(s, 'body').tagline) : 'Off: no stand or move breaks', `<select data-sel="bodyRule" aria-label="Body rule">${[...BODY_RULES.map((r) => [r.id, r.name]), ['custom-body', 'Custom…'], ['off', 'Off']]
           .map(([id, l]) => `<option value="${id}" ${s.bodyRule === id ? 'selected' : ''}>${esc(l)}</option>`)
           .join('')}</select>`)}
         ${s.bodyRule === 'custom-body' ? `<div class="custom-row"><label>Sit (min)${num('custom.body.sitMin', s.custom.body.sitMin, 1, 180)}</label><label>Stand (min, 0 = none)${num('custom.body.standMin', s.custom.body.standMin, 0, 120)}</label><label>Move (min)${num('custom.body.moveMin', s.custom.body.moveMin, 1, 30)}</label></div>` : ''}
@@ -89,7 +89,7 @@ export function renderSettings(app: AppCtx) {
       <div class="section-title"><h2>About</h2></div>
       <p class="muted">ergo <strong>v${__APP_VERSION__}</strong> · <a href="https://github.com/parmsam/ergo/blob/main/CHANGELOG.md" target="_blank" rel="noopener">changelog</a> · <a href="https://github.com/parmsam/ergo/tree/main/evidence" target="_blank" rel="noopener">evidence</a> · <a href="https://github.com/parmsam/ergo" target="_blank" rel="noopener">source</a></p>
       <p class="muted small" style="margin-top:8px">Private by design: no account, no server, no analytics, no activity monitoring. Everything stays in this browser.</p>
-      <p class="muted small" style="margin-top:8px">Keyboard: <kbd>Space</kbd> start/pause · <kbd>E</kbd> eye break · <kbd>B</kbd> body break · <kbd>D</kbd> done · <kbd>Z</kbd> snooze · <kbd>S</kbd> skip · <kbd>1</kbd>–<kbd>4</kbd> tabs · <kbd>?</kbd> help</p>
+      <p class="muted small" style="margin-top:8px">Keyboard: <kbd>Space</kbd> start/pause · <kbd>E</kbd> eye break · <kbd>B</kbd> body break · <kbd>D</kbd> done · <kbd>Z</kbd> snooze · <kbd>S</kbd> skip · <kbd>P</kbd> pop out · <kbd>F</kbd> full screen · <kbd>1</kbd>–<kbd>4</kbd> tabs · <kbd>?</kbd> help</p>
     </div>
   </section>`;
 }

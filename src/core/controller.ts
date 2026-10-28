@@ -1,5 +1,5 @@
 import { anchorFor, anchorStartingIn, phaseAt, phaseKey, upcoming, type PhaseState } from './engine';
-import { nudgePhases, ruleFor } from './rules';
+import { nudgePhases, ruleFor, trackOn } from './rules';
 import { dayKey, skipRun } from './stats';
 import type { Store } from './store';
 import type { Tone } from './audio';
@@ -42,12 +42,12 @@ export interface Effects {
 }
 
 export function lanesFor(s: Settings): Lane[] {
-  const eye = ruleFor(s, 'eye');
-  const body = ruleFor(s, 'body');
-  const out: Lane[] = [
-    { id: 'eye', rule: eye.id, phases: eye.phases },
-    { id: 'body', rule: body.id, phases: body.phases },
-  ];
+  const out: Lane[] = [];
+  for (const id of ['eye', 'body'] as const) {
+    if (!trackOn(s, id)) continue;
+    const r = ruleFor(s, id);
+    out.push({ id, rule: r.id, phases: r.phases });
+  }
   for (const id of Object.keys(s.nudges) as NudgeId[]) {
     if (s.nudges[id].on) out.push({ id, rule: id, phases: nudgePhases(id, s.nudges[id].everyMin) });
   }
@@ -159,9 +159,9 @@ export function createController(store: Store, fx: Effects) {
     log({ t: b.start, lane: id, rule: b.rule, kind: 'break', status: final, sec: Math.max(0, Math.round((Math.min(now, b.end) - b.start) / 1000)) });
     fx.breakEnd(b, final, auto);
     // Moving around means you looked away too: restart the eye cycle so the next eye break isn't seconds away.
-    if (id === 'body' && final === 'done' && settings().bodyResetsEye && session().anchors.eye != null) {
+    const eye = lane('eye');
+    if (id === 'body' && final === 'done' && settings().bodyResetsEye && eye && session().anchors.eye != null) {
       if (active.has('eye')) finalize('eye', 'done', now);
-      const eye = lane('eye')!;
       setAnchors({ eye: anchorFor(eye.phases, now, 0) });
       const st = stateOf('eye', now);
       if (st) prev.set('eye', phaseKey(st));
@@ -373,7 +373,11 @@ export function createController(store: Store, fx: Effects) {
         fresh[l.id] = effectiveNow(now);
       }
     }
-    for (const id of oldLanes.keys()) if (!lanes().some((l) => l.id === id)) endCue(id);
+    for (const id of oldLanes.keys())
+      if (!lanes().some((l) => l.id === id)) {
+        if (active.has(id)) finalize(id, 'skipped', now);
+        endCue(id);
+      }
     if (Object.keys(fresh).length && session().running) {
       setAnchors(fresh);
       sync(now);

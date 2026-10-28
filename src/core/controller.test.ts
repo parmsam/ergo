@@ -114,6 +114,40 @@ describe('controller', () => {
     expect(store.get().log.find((e) => e.lane === 'snack')).toMatchObject({ status: 'done', sec: 60 });
   });
 
+  it('runs only the body timer when the eye rule is off', () => {
+    const { ctrl, fx, run } = setup({ eyeRule: 'off' });
+    ctrl.start(T0);
+    expect(ctrl.lanes().map((l) => l.id)).toEqual(['body']);
+    expect(ctrl.stateOf('eye', T0)).toBeNull();
+    run(1000, 29 * MIN);
+    expect(fx.breakStart).toHaveBeenCalledTimes(1);
+    expect(ctrl.activeBreaks()[0].lane).toBe('body');
+    // Finishing the body break must not try to restart an eye timer that isn't there.
+    ctrl.done('body', T0 + 29 * MIN);
+    ctrl.breakNow('eye', T0 + 29 * MIN + 1000);
+    expect(ctrl.activeBreaks()).toEqual([]);
+  });
+
+  it('runs only the eye timer when the body rule is off', () => {
+    const { ctrl, fx, run } = setup({ bodyRule: 'off' });
+    ctrl.start(T0);
+    expect(ctrl.lanes().map((l) => l.id)).toEqual(['eye']);
+    run(1000, 20 * MIN);
+    expect(fx.cue).not.toHaveBeenCalled();
+    expect(ctrl.activeBreaks().map((b) => b.lane)).toEqual(['eye']);
+  });
+
+  it('switching a timer off mid-break ends that break', () => {
+    const { ctrl, fx, store } = setup();
+    ctrl.start(T0);
+    ctrl.breakNow('eye', T0 + MIN);
+    const before = store.get().settings;
+    store.update((d) => void (d.settings.eyeRule = 'off'), ['settings']);
+    ctrl.settingsChanged(before, T0 + MIN + 1000);
+    expect(ctrl.activeBreaks()).toEqual([]);
+    expect(fx.breakEnd).toHaveBeenCalledTimes(1);
+  });
+
   it('changing a rule restarts only that lane', () => {
     const { ctrl, store } = setup();
     ctrl.start(T0);

@@ -180,3 +180,60 @@ test('chimes switch the audio session to playback (iPhone silent switch) and bac
   await page.clock.runFor(3000);
   await expect.poll(() => page.evaluate(() => (navigator as unknown as { audioSession: { type: string } }).audioSession.type)).toBe('auto');
 });
+
+test.describe('pop-out mini timer', () => {
+  // Stand-in for Document Picture-in-Picture (Chromium only): a popup window we can inspect.
+  const fakePip = () => {
+    (window as unknown as { documentPictureInPicture: unknown }).documentPictureInPicture = {
+      window: null,
+      requestWindow: async () => window.open('', 'pip', 'width=260,height=210')!,
+    };
+  };
+
+  test('mirrors both lanes and drives the real controller', async ({ page, context, isMobile }) => {
+    test.skip(isMobile, 'desktop feature');
+    await page.addInitScript(fakePip);
+    await open(page, quiet);
+    const [popup] = await Promise.all([context.waitForEvent('page'), page.getByRole('button', { name: 'Pop out mini timer' }).click()]);
+    await expect(popup.getByRole('button', { name: 'Start' })).toBeVisible();
+    await popup.getByRole('button', { name: 'Start' }).click();
+    await expect(page.locator('[data-bind="status"]')).toHaveText('Running');
+    await expect(popup.getByRole('timer', { name: 'Eyes' })).toHaveText('20:00');
+    await expect(popup.getByRole('button', { name: 'Pause' })).toBeVisible();
+
+    // A break takes over the window, and Done there ends it on the page.
+    await page.keyboard.press('e');
+    await expect(popup.locator('.pip-kicker')).toHaveText('Eye break');
+    await popup.getByRole('button', { name: 'Done' }).click();
+    await expect(page.getByRole('dialog', { name: /look/i })).toBeHidden({ timeout: 4000 });
+    await expect(popup.getByRole('button', { name: 'Pause' })).toBeVisible();
+  });
+
+  test('is shown only where the browser has a pop-out window, and never on phones', async ({ page, isMobile }) => {
+    await open(page, quiet);
+    const supported = await page.evaluate(() => 'documentPictureInPicture' in window);
+    const btn = page.getByRole('button', { name: 'Pop out mini timer' });
+    if (supported && !isMobile) await expect(btn).toBeVisible();
+    else await expect(btn).toBeHidden();
+  });
+});
+
+test('full screen button toggles full screen', async ({ page, browserName, isMobile }) => {
+  test.skip(browserName !== 'chromium' || isMobile, 'Fullscreen API checked in desktop Chromium');
+  await open(page, quiet);
+  await page.getByRole('button', { name: 'Full screen' }).click();
+  await expect(page.getByRole('button', { name: 'Exit full screen' })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Exit full screen' }).click();
+  await expect(page.getByRole('button', { name: 'Full screen' })).toHaveAttribute('aria-pressed', 'false');
+});
+
+test('one timer only: turning the eye rule off leaves a single body lane', async ({ page }) => {
+  await open(page, quiet, '#settings');
+  await page.getByRole('combobox', { name: 'Eye rule' }).selectOption('off');
+  await expect(page.locator('.field', { hasText: 'Off: no eye breaks' })).toBeVisible();
+  await page.getByRole('link', { name: 'Today', exact: true }).click();
+  await expect(page.locator('.lane')).toHaveCount(1);
+  await expect(page.locator('.lane.body')).toBeVisible();
+  await page.getByRole('button', { name: 'Start reminders' }).click();
+  await expect(page.locator('.lane.body .time')).toHaveText('20:00');
+});

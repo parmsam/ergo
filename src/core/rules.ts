@@ -172,6 +172,9 @@ export function customBodyRule(s: Settings): Rule {
   };
 }
 
+/** A track can be switched off (rule "off") to run only the other timer. */
+export const trackOn = (s: Settings, track: TrackId) => (track === 'eye' ? s.eyeRule : s.bodyRule) !== 'off';
+
 export function ruleFor(s: Settings, track: TrackId): Rule {
   if (track === 'eye') return s.eyeRule === 'custom-eye' ? customEyeRule(s) : (EYE_RULES.find((r) => r.id === s.eyeRule) ?? EYE_RULES[0]);
   return s.bodyRule === 'custom-body' ? customBodyRule(s) : (BODY_RULES.find((r) => r.id === s.bodyRule) ?? BODY_RULES[0]);

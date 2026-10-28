@@ -2,6 +2,16 @@
 
 All notable changes to ergo. Versions follow [semver](https://semver.org); the version in `package.json` is shown in the app header and in Settings → About.
 
+## [0.6.0] - 2026-10-27
+
+### Added
+- **Pop-out mini timer** (Chrome and Edge). A small always-on-top window with both countdowns and Start/Pause. During a break it shows the break with Done and Skip. Press <kbd>P</kbd> or use the header button.
+- **Full screen** button in the header (<kbd>F</kbd>), where the browser supports it.
+- **One timer only.** Each track's rule now has an **Off** choice, so you can run just the eye timer or just the body timer. Today shows a single centered lane, and the off track's tiles are hidden.
+
+### Notes
+- The pop-out and full-screen buttons are hidden on phones: there's no room, and phones have no pop-out window.
+
 ## [0.5.1] - 2026-10-27
 
 ### Changed
