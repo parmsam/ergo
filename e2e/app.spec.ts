@@ -117,6 +117,7 @@ test('pause menu, resume and end day update the controls', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Resume' })).toBeVisible();
   await expect(page.locator('[data-bind="status"]')).toHaveText('Paused');
   await expect(page.locator('[data-bind="paused"]')).toContainText('Paused until');
+  await expect(page).toHaveTitle(/^⏸ 👁 \d+:\d\d · 🧍 \d+:\d\d$/);
   await page.getByRole('button', { name: 'Resume' }).click();
   await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();
   await expect(page.locator('[data-bind="status"]')).toHaveText('Running');

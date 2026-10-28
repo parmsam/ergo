@@ -230,11 +230,12 @@ function title(now = Date.now()) {
   const active = ctrl.activeBreaks()[0];
   if (active) document.title = `${active.phase.label} ${clock(active.end - now)} · ergo`;
   else if (!s.running) document.title = 'ergo';
-  else if (s.pausedAt) document.title = 'Paused · ergo';
   else {
+    // Paused keeps the lane icons and frozen times, so the tab still reads as ergo at a glance.
     const e = ctrl.stateOf('eye', now);
     const b = ctrl.stateOf('body', now);
-    document.title = [e && `👁 ${clock(e.remaining)}`, b && `🧍 ${clock(b.remaining)}`].filter(Boolean).join(' · ') || 'ergo';
+    const lanes = [e && `👁 ${clock(e.remaining)}`, b && `🧍 ${clock(b.remaining)}`].filter(Boolean).join(' · ');
+    document.title = s.pausedAt ? `⏸ ${lanes || 'Paused · ergo'}` : lanes || 'ergo';
   }
 }
 

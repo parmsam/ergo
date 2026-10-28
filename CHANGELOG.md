@@ -2,6 +2,11 @@
 
 All notable changes to ergo. Versions follow [semver](https://semver.org); the version in `package.json` is shown in the app header and in Settings → About.
 
+## [0.6.2] - 2026-10-28
+
+### Fixed
+- The tab title keeps its 👁 and 🧍 timers while paused, marked with ⏸, instead of switching to plain "Paused".
+
 ## [0.6.1] - 2026-10-27
 
 ### Added
