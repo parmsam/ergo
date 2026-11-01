@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { breakLeft, createController, firstAlerts, lanesFor, nextAlerts, RING_EVERY, RING_MAX, type Effects } from './controller';
+import { breakLeft, createController, firstAlerts, lanesFor, nextAlerts, RING_EVERY, RING_MAX, timelineEvents, type Effects } from './controller';
 import { DEFAULT_SESSION, DEFAULT_SETTINGS, mergeSettings } from './storage';
 import { createStore } from './store';
 
@@ -24,6 +24,26 @@ function setup(over: Partial<typeof DEFAULT_SETTINGS> = {}) {
 }
 
 beforeEach(() => localStorage.clear());
+
+describe('timeline events', () => {
+  const ls = lanesFor(mergeSettings({ ...DEFAULT_SETTINGS }));
+  const anchors = { eye: T0, body: T0, posture: T0 };
+  it('lists the next hour in order, clipped to the window', () => {
+    const ev = timelineEvents(ls, anchors, T0, 60 * MIN);
+    expect(ev[0]).toMatchObject({ lane: 'posture', start: 15 * MIN });
+    expect(ev.filter((e) => e.lane === 'posture').map((e) => e.start / MIN)).toEqual([15, 30.25, 45.5]);
+    expect(ev.find((e) => e.lane === 'body' && e.phase.kind === 'break')).toMatchObject({ start: 28 * MIN, end: 30 * MIN });
+    expect(ev.every((e, i) => i === 0 || e.start >= ev[i - 1].start && e.end <= 60 * MIN)).toBe(true);
+  });
+  it('includes a cue or break already under way, starting at 0', () => {
+    const ev = timelineEvents(ls, anchors, T0 + 24 * MIN, 60 * MIN);
+    expect(ev[0]).toMatchObject({ lane: 'body', start: 0, end: 4 * MIN });
+    expect(ev[0].phase.kind).toBe('cue');
+  });
+  it('skips lanes with no anchor', () => {
+    expect(timelineEvents(ls, {}, T0, 60 * MIN)).toEqual([]);
+  });
+});
 
 describe('next alerts', () => {
   const defaults = mergeSettings({ ...DEFAULT_SETTINGS });

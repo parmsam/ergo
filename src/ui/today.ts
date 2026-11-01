@@ -1,5 +1,5 @@
 import { coach } from '../core/coach';
-import { firstAlerts, nextAlerts, type NextAlert } from '../core/controller';
+import { firstAlerts, nextAlerts, timelineEvents, type NextAlert, type TimelineEvent } from '../core/controller';
 import { cycleMs, untilNext } from '../core/engine';
 import { clock, duration, pct, timeOfDay } from '../core/format';
 import { NUDGES, STRENGTH_LABEL, evidenceUrl, ruleFor, trackOn } from '../core/rules';
@@ -40,6 +40,40 @@ function firstReminderHtml(alerts: NextAlert[], defaults: Set<LaneId>) {
   const [first, ...rest] = alerts;
   const note = defaults.has(first.lane) ? ' (a default interval you can change in Settings)' : '';
   return `First reminder: <strong>${esc(alertName(first))}</strong> after ${duration(first.ms / 1000)}${note}${rest.length ? `, then ${rest.map(when).join(', ')}` : ''}.`;
+}
+
+const WINDOW = 60 * 60_000;
+const ROW_LABEL: Record<LaneId, string> = { eye: 'Eyes', body: 'Body', posture: 'Posture', snack: 'Snack' };
+const eventName = (e: TimelineEvent) => alertName({ lane: e.lane, phase: e.phase, ms: e.start });
+
+/** "Next hour": every lane's cues and breaks on one scale, plus the same data as a list. */
+function nextHour(app: AppCtx, now: number) {
+  const { session } = app.store.get();
+  const t = app.ctrl.effectiveNow(now);
+  const lanes = app.ctrl.lanes();
+  const events = timelineEvents(lanes, session.anchors, t, WINDOW);
+  const pos = (ms: number) => ((ms / WINDOW) * 100).toFixed(2);
+  const rows = lanes
+    .map((l) => {
+      const nudge = l.id === 'posture' || l.id === 'snack';
+      const evs = events
+        .filter((e) => e.lane === l.id)
+        .map((e) => {
+          const cls = nudge ? 'dot' : e.phase.kind;
+          const style = nudge ? `left:${pos(e.start)}%` : `left:${pos(e.start)}%;width:${(((e.end - e.start) / WINDOW) * 100).toFixed(2)}%`;
+          return `<i class="ev ${cls}" style="${style}" title="${esc(eventName(e))} in ${clock(e.start)}"></i>`;
+        })
+        .join('');
+      return `<div class="tl-row ${l.id === 'eye' ? 'eye' : 'body'}"><span class="tl-label">${ROW_LABEL[l.id]}</span><div class="tl-track">${evs}</div></div>`;
+    })
+    .join('');
+  const ticks = [0, 10, 20, 30, 40, 50, 60].map((m) => `<i style="left:${pos(m * 60_000)}%">${m ? `${m}m` : 'now'}</i>`).join('');
+  const table = events.length
+    ? `<table><thead><tr><th>Reminder</th><th>In</th><th>Length</th></tr></thead><tbody>${events
+        .map((e) => `<tr><td>${esc(eventName(e))}</td><td>${e.start ? clock(e.start) : 'now'}</td><td>${duration(e.phase.sec)}</td></tr>`)
+        .join('')}</tbody></table>`
+    : '<p class="tl-empty">Nothing in the next hour.</p>';
+  return { chart: `${rows}<div class="tl-axis" aria-hidden="true">${ticks}</div>`, table };
 }
 
 function timeline(phases: Phase[]) {
@@ -133,6 +167,18 @@ export function renderToday(app: AppCtx) {
         : `<div class="section card empty-lanes"><p>Both timers are off.</p><button class="btn sm" data-go="settings">Choose a rule in Settings</button></div>`
     }
     <div class="section nudges">${nudges}</div>
+    ${
+      running
+        ? (() => {
+            const nh = nextHour(app, now);
+            return `<div class="section card tl" data-bind="tl">
+      <div class="section-title"><h2>Next hour</h2></div>
+      <div class="tl-chart" data-bind="tl-chart" role="img" aria-label="Timeline of your reminders over the next hour. The same information is in the list below.">${nh.chart}</div>
+      <details class="tl-list"><summary>Show as list</summary><div data-bind="tl-table">${nh.table}</div></details>
+    </div>`;
+          })()
+        : ''
+    }
     <div class="section">
       <div class="section-title"><h2>Today</h2><button class="rule-link" data-go="stats">See progress →</button></div>
       <div class="tiles">
@@ -247,6 +293,12 @@ export function tickToday(root: HTMLElement, app: AppCtx, now: number) {
   if (nu) {
     nu.hidden = session.pausedAt != null;
     nu.innerHTML = nextUpHtml(nextAlerts(app.ctrl.lanes(), session.anchors, app.ctrl.effectiveNow(now)));
+  }
+  const tl = $('[data-bind="tl-chart"]', root);
+  if (tl) {
+    const nh = nextHour(app, now);
+    tl.innerHTML = nh.chart;
+    $('[data-bind="tl-table"]', root)!.innerHTML = nh.table;
   }
   const p = $('[data-bind="paused"]', root);
   if (p && session.pausedAt) p.textContent = session.pausedUntil ? `Paused until ${timeOfDay(session.pausedUntil)} (${clock(session.pausedUntil - now)})` : 'Paused';

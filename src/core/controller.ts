@@ -81,6 +81,32 @@ export function nextAlerts(ls: Lane[], anchors: Partial<Record<LaneId, number>>,
   return out.sort((a, b) => a.ms - b.ms);
 }
 
+export interface TimelineEvent {
+  lane: LaneId;
+  phase: Phase;
+  /** Ms from `now`, clipped to the window. A cue or break already under way starts at 0. */
+  start: number;
+  end: number;
+}
+
+/** Every cue and break in the next `windowMs`, soonest first. */
+export function timelineEvents(ls: Lane[], anchors: Partial<Record<LaneId, number>>, now: number, windowMs: number): TimelineEvent[] {
+  const out: TimelineEvent[] = [];
+  for (const l of ls) {
+    const anchor = anchors[l.id];
+    if (anchor == null) continue;
+    // Look back one cycle so a phase that started before `now` and is still running is included.
+    for (const u of upcoming(l.phases, anchor, now - cycleMs(l.phases), now + windowMs)) {
+      if (u.phase.kind === 'work') continue;
+      const start = u.at - now;
+      const end = start + u.phase.sec * 1000;
+      if (end <= 0) continue;
+      out.push({ lane: l.id, phase: u.phase, start: Math.max(0, start), end: Math.min(windowMs, end) });
+    }
+  }
+  return out.sort((a, b) => a.start - b.start);
+}
+
 /** What the first alert of each lane will be if you start right now. */
 export function firstAlerts(ls: Lane[]): NextAlert[] {
   return nextAlerts(ls, Object.fromEntries(ls.map((l) => [l.id, 0])), 0);

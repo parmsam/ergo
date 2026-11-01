@@ -274,3 +274,14 @@ test('Today says when the first reminder comes, then counts down to it', async (
   await page.clock.fastForward(60_000);
   await expect(page.getByText(/Next up: Posture reset in 14:/)).toBeVisible();
 });
+
+test('Next hour shows every lane on one timeline, with a list version', async ({ page }) => {
+  await open(page);
+  await expect(page.getByRole('heading', { name: 'Next hour' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Start reminders' }).click();
+  await expect(page.getByRole('heading', { name: 'Next hour' })).toBeVisible();
+  await expect(page.getByRole('img', { name: /Timeline of your reminders/ })).toBeVisible();
+  await page.getByText('Show as list').click();
+  await expect(page.getByRole('cell', { name: 'Posture reset' }).first()).toBeVisible();
+  await expect(page.getByRole('cell', { name: 'Stand up' }).first()).toBeVisible();
+});

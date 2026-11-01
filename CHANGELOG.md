@@ -2,6 +2,11 @@
 
 All notable changes to ergo. Versions follow [semver](https://semver.org); the version in `package.json` is shown in the app header and in Settings → About.
 
+## [0.9.0] - 2026-11-01
+
+### Added
+- **Next hour** card on Today while reminders run: eye, body and nudge cues and breaks on one 60 min timeline, so the order of what's coming is clear. "Show as list" gives the same information as a table.
+
 ## [0.8.0] - 2026-11-01
 
 ### Added
