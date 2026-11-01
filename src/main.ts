@@ -212,7 +212,7 @@ function shell() {
           ? `<div class="top-nav top-tools" role="group" aria-label="View">${pipSupported() ? `<button class="top-link" data-act="pip" aria-label="Pop out mini timer" title="Pop out mini timer (P)" aria-pressed="false">${icons.popout}</button>` : ''}<button class="top-link" data-act="fullscreen"></button></div>`
           : ''
       }
-      <nav class="top-nav" aria-label="Pages">${VIEWS.map((v) => `<a class="top-link" href="#${v.id}" data-view="${v.id}" aria-label="${v.label}" title="${v.label} (${VIEWS.indexOf(v) + 1})">${v.icon}</a>`).join('')}</nav>
+      <nav class="top-nav" aria-label="Pages">${VIEWS.map((v) => `<a class="top-link" href="#${v.id}" data-view="${v.id}" aria-label="${v.label}" title="${v.label} (${VIEWS.indexOf(v) + 1})">${v.icon}<span class="lbl" aria-hidden="true">${v.label}</span></a>`).join('')}</nav>
     </header>
     <main id="view"></main>
     <footer class="foot">ergo v${__APP_VERSION__} · <a href="https://github.com/parmsam/ergo/tree/main/evidence" target="_blank" rel="noopener">evidence</a> · <a href="https://github.com/parmsam/ergo" target="_blank" rel="noopener">source</a> · not medical advice</footer>
@@ -242,7 +242,7 @@ function status() {
   const el = $('[data-bind="status"]');
   if (!el) return;
   const s = store.get().session;
-  const state = !s.running ? ['', 'Off'] : s.pausedAt ? ['paused', 'Paused'] : ['on', 'Running'];
+  const state = !s.running ? ['', 'Not started'] : s.pausedAt ? ['paused', 'Paused'] : ['on', 'Running'];
   document.documentElement.dataset.run = state[0] || 'off';
   el.innerHTML = `<span class="status-dot ${state[0]}"></span><span class="status-text">${state[1]}</span>`;
   el.title = state[1];

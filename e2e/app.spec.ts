@@ -71,6 +71,7 @@ test('guide shows sourced myths and the 3 min active rule', async ({ page }) => 
   await page.locator('.rule-card', { hasText: '3 min active / 30' }).getByRole('button', { name: 'Use this' }).click();
   await page.getByRole('link', { name: 'Today', exact: true }).click();
   await expect(page.locator('.lane.body .time')).toHaveText('30:00');
+  await page.getByRole('button', { name: 'Start reminders' }).click();
   await expect(page.locator('.tile', { hasText: 'Sitting (est.)' })).toContainText('of 8h budget');
 });
 
@@ -123,7 +124,7 @@ test('pause menu, resume and end day update the controls', async ({ page }) => {
   await expect(page.locator('[data-bind="status"]')).toHaveText('Running');
   await page.getByRole('button', { name: 'End day' }).click();
   await expect(page.getByRole('button', { name: 'Start reminders' })).toBeVisible();
-  await expect(page.locator('[data-bind="status"]')).toHaveText('Off');
+  await expect(page.locator('[data-bind="status"]')).toHaveText('Not started');
 });
 
 test('header icons navigate between pages', async ({ page }) => {
@@ -268,7 +269,7 @@ test('ring until I respond: the break waits for Start, then counts down', async 
 
 test('Today says when the first reminder comes, then counts down to it', async ({ page }) => {
   await open(page);
-  await expect(page.getByText(/First reminder: Posture reset after 15m/)).toBeVisible();
+  await expect(page.getByText(/First reminder: Posture reset after 15m \(default; change it in Settings\)\. Eye break and Stand up at 20m follow\./)).toBeVisible();
   await page.getByRole('button', { name: 'Start reminders' }).click();
   await expect(page.getByText(/Next up: Posture reset in 15:00/)).toBeVisible();
   await page.clock.fastForward(60_000);
@@ -305,4 +306,25 @@ test('the Next up line can be switched off in Settings', async ({ page }) => {
   await page.getByRole('button', { name: 'Start reminders' }).click();
   await expect(page.getByText(/Next up:/)).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'Next hour' })).toBeVisible();
+});
+
+test('first run explains itself and hides empty stats', async ({ page }) => {
+  await open(page, quiet);
+  await expect(page.locator('.intro')).toContainText('look away from the screen');
+  await expect(page.locator('.intro')).toContainText('only fire while it');
+  await expect(page.locator('[data-bind="status"]')).toHaveText('Not started');
+  await expect(page.getByRole('heading', { name: 'Today', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Break now' }).first()).toBeDisabled();
+  await page.getByRole('button', { name: 'Start reminders' }).click();
+  await expect(page.getByRole('heading', { name: 'Today', exact: true })).toBeVisible();
+});
+
+test('first run offers notifications with context, before Start', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(Notification, 'permission', { get: () => 'default', configurable: true });
+  });
+  await open(page, quiet);
+  await expect(page.locator('.notify-ask')).toContainText('Working in other apps?');
+  await page.getByRole('button', { name: 'Start reminders' }).click();
+  await expect(page.locator('.notify-ask')).toHaveCount(0);
 });

@@ -2,6 +2,7 @@ import { coach } from '../core/coach';
 import { firstAlerts, nextAlerts, timelineEvents, type NextAlert, type TimelineEvent } from '../core/controller';
 import { cycleMs, untilNext } from '../core/engine';
 import { clock, duration, pct, timeOfDay } from '../core/format';
+import { notifySupported, requestNotify } from '../core/notify';
 import { NUDGES, STRENGTH_LABEL, evidenceUrl, ruleFor, trackOn } from '../core/rules';
 import { adherence, dayKey, skipRun, summarize } from '../core/stats';
 import type { LaneId, NudgeId, Phase, TrackId } from '../core/types';
@@ -35,13 +36,19 @@ function nextUpHtml(alerts: NextAlert[]) {
   return `Next up: ${soonest.map((a) => `<strong>${esc(alertName(a))}</strong>`).join(' and ')} in ${clock(alerts[0].ms)}`;
 }
 
-/** Before starting: what the first reminder will be and when, so nothing arrives as a surprise. */
+/** Before starting: what the first reminder will be and when, so nothing arrives as a surprise. Reminders at the same moment are grouped. */
 function firstReminderHtml(alerts: NextAlert[], defaults: Set<LaneId>) {
   if (!alerts.length) return '';
-  const when = (a: NextAlert) => `${esc(alertName(a))} at ${duration(a.ms / 1000)}`;
-  const [first, ...rest] = alerts;
-  const note = defaults.has(first.lane) ? ' (a default interval you can change in Settings)' : '';
-  return `First reminder: <strong>${esc(alertName(first))}</strong> after ${duration(first.ms / 1000)}${note}${rest.length ? `, then ${rest.map(when).join(', ')}` : ''}.`;
+  const groups: NextAlert[][] = [];
+  for (const a of alerts) {
+    const g = groups.find((x) => x[0].ms === a.ms);
+    g ? g.push(a) : groups.push([a]);
+  }
+  const names = (g: NextAlert[]) => g.map((a) => `<strong>${esc(alertName(a))}</strong>`).join(' and ');
+  const [first, ...rest] = groups;
+  const isDefault = first.some((a) => defaults.has(a.lane));
+  const tail = rest.length ? ` ${rest.map((g) => `${names(g)} at ${duration(g[0].ms / 1000)}`).join(', ')} follow.` : '';
+  return `First reminder: ${names(first)} after ${duration(first[0].ms / 1000)}${isDefault ? ' (default; change it in Settings)' : ''}.${tail}`;
 }
 
 const WINDOW = 60 * 60_000;
@@ -110,7 +117,7 @@ export function renderToday(app: AppCtx) {
           <h2>${t.title}</h2>
           <button class="rule-link" data-go="settings" title="Change rule">${esc(rule.name)} · ${esc(rule.tagline)}</button>
         </div>
-        <a class="badge ${rule.strength}" href="${evidenceUrl(rule.evidence)}" target="_blank" rel="noopener" title="Read the evidence">${STRENGTH_LABEL[rule.strength]}</a>
+        <a class="badge ${rule.strength}" href="${evidenceUrl(rule.evidence)}" target="_blank" rel="noopener" title="How strong is the evidence for this schedule? Tap to read the sources and caveats.">${STRENGTH_LABEL[rule.strength]}</a>
       </div>
       <div class="ring-wrap">
         ${ring(0)}
@@ -121,7 +128,7 @@ export function renderToday(app: AppCtx) {
       </div>
       ${timeline(rule.phases)}
       <div class="lane-actions">
-        <button class="btn sm ghost" data-act="break-now" data-lane="${t.id}" ${running && !paused ? '' : 'disabled'}>${icons.bolt}Break now</button>
+        <button class="btn sm ghost" data-act="break-now" data-lane="${t.id}" ${running && !paused ? '' : 'disabled title="Start reminders to use this"'}>${icons.bolt}Break now</button>
       </div>
     </article>`;
   }).join('');
@@ -139,7 +146,7 @@ export function renderToday(app: AppCtx) {
   const nudges = (Object.keys(NUDGES) as NudgeId[])
     .map((id) => {
       const n = settings.nudges[id];
-      return `<button class="chip nudge ${n.on ? '' : 'off'}" data-nudge="${id}" title="${n.on ? 'Turn off' : 'Turn on'}">
+      return `<button class="chip nudge ${n.on ? '' : 'off'}" data-nudge="${id}" aria-pressed="${n.on}" title="${esc(NUDGES[id].prompt)}. Tap to turn ${n.on ? 'off' : 'on'}.">
         ${id === 'snack' ? icons.bolt : icons.posture}
         <span>${NUDGES[id].name} every ${n.everyMin}m</span>
         <strong data-bind="nudge-${id}">${n.on ? '' : 'off'}</strong>
@@ -151,12 +158,23 @@ export function renderToday(app: AppCtx) {
     `<div class="card tile" style="--c:var(--${c})"><div class="label">${icon}${label}</div><div class="value">${value} <small>${sub}</small></div>${
       frac != null ? `<div class="bar"><i style="width:${Math.round(frac * 100)}%"></i></div>` : ''
     }</div>`;
+  const hasData = today.activeSec > 0 || today.stand.shown > 0 || today.snacks.shown > 0 || today.eye.done + today.eye.skipped + today.eye.missed + today.body.done + today.body.skipped + today.body.missed > 0;
   const eyeDue = today.eye.done + today.eye.skipped + today.eye.missed;
   const bodyDue = today.body.done + today.body.skipped + today.body.missed;
 
   return `<section class="view today">
-    ${!running ? `<p class="intro">Start when you sit down to work. ergo reminds you to rest your eyes and change position, and keeps a private record in this browser.</p>` : ''}
+    ${
+      !running
+        ? `<div class="intro"><p>Start when you sit down to work. ergo runs two timers: one reminds you to <strong>look away from the screen</strong>, the other to <strong>stand and move</strong>.</p>
+      <p class="intro-fine">Keep ergo open in a tab or installed as an app, since reminders only fire while it's running. Nothing leaves this browser.</p></div>`
+        : ''
+    }
     <div class="controls">${controls}</div>
+    ${
+      !running && notifySupported() && Notification.permission === 'default'
+        ? `<p class="notify-ask">Working in other apps? <button class="rule-link" data-act="allow-notify-today">Allow notifications</button> so breaks reach you there. Your browser will ask once.</p>`
+        : ''
+    }
     ${
       !settings.showNextUp
         ? ''
@@ -170,7 +188,7 @@ export function renderToday(app: AppCtx) {
         ? `<div class="lanes section ${tracks.length === 1 ? 'single' : ''}">${lanes}</div>`
         : `<div class="section card empty-lanes"><p>Both timers are off.</p><button class="btn sm" data-go="settings">Choose a rule in Settings</button></div>`
     }
-    <div class="section nudges">${nudges}</div>
+    <div class="section nudges" role="group" aria-label="Optional nudges (tap to turn on or off)">${nudges}</div>
     ${
       running
         ? (() => {
@@ -183,7 +201,10 @@ export function renderToday(app: AppCtx) {
           })()
         : ''
     }
-    <div class="section">
+    ${
+      !running && !hasData
+        ? ''
+        : `<div class="section">
       <div class="section-title"><h2>Today</h2><button class="rule-link" data-go="stats">See progress →</button></div>
       <div class="tiles">
         ${trackOn(settings, 'eye') ? tile('Eye breaks', icons.eye, `${today.eye.done}`, `of ${eyeDue} · ${pct(adherence(today.eye))}`, adherence(today.eye), 'eye') : ''}
@@ -196,7 +217,8 @@ export function renderToday(app: AppCtx) {
         }
         ${settings.nudges.snack.on ? tile('Exercise snacks', icons.bolt, `${today.snacks.done}`, `of ${today.snacks.shown}`, today.snacks.shown ? today.snacks.done / today.snacks.shown : null, 'body') : ''}
       </div>
-    </div>
+    </div>`
+    }
     <div class="section card coach ${note.tone}">
       <div class="avatar">${note.tone === 'nudge' ? icons.flame : icons.bolt}</div>
       <div>
@@ -209,6 +231,11 @@ export function renderToday(app: AppCtx) {
 
 export function bindToday(root: HTMLElement, app: AppCtx) {
   root.querySelector('[data-act="start"]')?.addEventListener('click', () => app.actions.start());
+  root.querySelector('[data-act="allow-notify-today"]')?.addEventListener('click', async () => {
+    const r = await requestNotify();
+    if (r === 'granted') app.updateSettings((s) => (s.notify = true));
+    app.refresh();
+  });
   root.querySelector('[data-act="resume"]')?.addEventListener('click', () => (app.ctrl.resume(), app.refresh()));
   root.querySelector('[data-act="stop"]')?.addEventListener('click', () => (app.ctrl.stop(), app.refresh()));
   root.querySelectorAll<HTMLElement>('[data-act="break-now"]').forEach((b) => b.addEventListener('click', () => app.ctrl.breakNow(b.dataset.lane as TrackId)));

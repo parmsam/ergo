@@ -2,6 +2,11 @@
 
 All notable changes to ergo. Versions follow [semver](https://semver.org); the version in `package.json` is shown in the app header and in Settings → About.
 
+## [0.10.0] - 2026-11-01
+
+### Changed
+- **First-run polish.** The intro now says what the two timers do and that reminders only fire while ergo is open. The header chip reads "Not started" instead of "Off". Header icons gain text labels on wide screens. Today's empty `0 of 0` tiles stay hidden until there is something to show. Nudge chips are announced as toggles, "Break now" explains why it is disabled, and evidence badges say what they mean. The First reminder line groups reminders that land together and is shorter. Nudge chips explain themselves on hover. Before the first Start, a short line explains why to allow notifications. Rings are smaller on phones so more fits above the fold.
+
 ## [0.9.2] - 2026-11-01
 
 ### Added
