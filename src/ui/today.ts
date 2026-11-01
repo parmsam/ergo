@@ -28,9 +28,11 @@ function untilLabel(next: Phase | undefined) {
 const alertName = (a: NextAlert) =>
   a.lane === 'eye' ? 'Eye break' : a.lane === 'body' ? (a.phase.kind === 'cue' ? 'Stand up' : 'Move break') : NUDGES[a.lane as NudgeId].name;
 
-/** "Posture reset in 12:40 · Eye break in 17:40" */
+/** The soonest alert (and any that land at the same moment): "Next up: Eye break and Stand up in 18:38". The card below has the rest. */
 function nextUpHtml(alerts: NextAlert[]) {
-  return alerts.length ? `Next up: ${alerts.map((a) => `<span><strong>${esc(alertName(a))}</strong> in ${clock(a.ms)}</span>`).join(' · ')}` : '';
+  if (!alerts.length) return '';
+  const soonest = alerts.filter((a) => a.ms - alerts[0].ms < 1000);
+  return `Next up: ${soonest.map((a) => `<strong>${esc(alertName(a))}</strong>`).join(' and ')} in ${clock(alerts[0].ms)}`;
 }
 
 /** Before starting: what the first reminder will be and when, so nothing arrives as a surprise. */

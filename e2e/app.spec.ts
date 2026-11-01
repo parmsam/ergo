@@ -285,3 +285,12 @@ test('Next hour shows every lane on one timeline, with a list version', async ({
   await expect(page.getByRole('cell', { name: 'Posture reset' }).first()).toBeVisible();
   await expect(page.getByRole('cell', { name: 'Stand up' }).first()).toBeVisible();
 });
+
+test('Next up names only the soonest alert, and joins ones that land together', async ({ page }) => {
+  await open(page, { settings: { nudges: { posture: { on: true, everyMin: 15 }, snack: { on: true, everyMin: 120 } } } });
+  await page.getByRole('button', { name: 'Start reminders' }).click();
+  await expect(page.getByText('Next up: Posture reset in 15:00')).toBeVisible();
+  await expect(page.getByText(/Exercise snack in/)).toHaveCount(0);
+  await page.locator('[data-nudge="posture"]').click();
+  await expect(page.getByText('Next up: Eye break and Stand up in 20:00')).toBeVisible();
+});

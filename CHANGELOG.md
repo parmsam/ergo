@@ -2,6 +2,11 @@
 
 All notable changes to ergo. Versions follow [semver](https://semver.org); the version in `package.json` is shown in the app header and in Settings → About.
 
+## [0.9.1] - 2026-11-01
+
+### Changed
+- The **Next up** line on Today names only the soonest reminder (and any that land at the same moment), so it stays on one line. The Next hour card shows the rest.
+
 ## [0.9.0] - 2026-11-01
 
 ### Added
