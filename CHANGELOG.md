@@ -2,6 +2,17 @@
 
 All notable changes to ergo. Versions follow [semver](https://semver.org); the version in `package.json` is shown in the app header and in Settings → About.
 
+## [0.8.0] - 2026-11-01
+
+### Added
+- **Next up** line on Today while reminders run: every lane's next cue or break, soonest first (for example "Posture reset in 12:40 · Eye break in 17:40"). Hidden while paused.
+- Before you start, Today says what the first reminder will be and when, and notes that the posture interval is a default you can change.
+
+## [0.7.1] - 2026-11-01
+
+### Fixed
+- When a body break finished on its own, the eye timer restarted but an eye chime for the old time stayed queued, so it could ring with nothing on screen. Chimes are now rescheduled whenever the eye timer restarts.
+
 ## [0.7.0] - 2026-10-28
 
 ### Added

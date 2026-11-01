@@ -1,9 +1,10 @@
 import { coach } from '../core/coach';
+import { firstAlerts, nextAlerts, type NextAlert } from '../core/controller';
 import { cycleMs, untilNext } from '../core/engine';
 import { clock, duration, pct, timeOfDay } from '../core/format';
 import { NUDGES, STRENGTH_LABEL, evidenceUrl, ruleFor, trackOn } from '../core/rules';
 import { adherence, dayKey, skipRun, summarize } from '../core/stats';
-import type { NudgeId, Phase, TrackId } from '../core/types';
+import type { LaneId, NudgeId, Phase, TrackId } from '../core/types';
 import type { AppCtx } from './ctx';
 import { $, esc, ring, setRing } from './dom';
 import { icons } from './icons';
@@ -22,6 +23,23 @@ function untilLabel(next: Phase | undefined) {
   if (next.focus === 'far' || next.focus === 'eyes') return 'until you look away';
   if (next.focus === 'walk') return 'until a walk';
   return 'until you move';
+}
+
+const alertName = (a: NextAlert) =>
+  a.lane === 'eye' ? 'Eye break' : a.lane === 'body' ? (a.phase.kind === 'cue' ? 'Stand up' : 'Move break') : NUDGES[a.lane as NudgeId].name;
+
+/** "Posture reset in 12:40 · Eye break in 17:40" */
+function nextUpHtml(alerts: NextAlert[]) {
+  return alerts.length ? `Next up: ${alerts.map((a) => `<span><strong>${esc(alertName(a))}</strong> in ${clock(a.ms)}</span>`).join(' · ')}` : '';
+}
+
+/** Before starting: what the first reminder will be and when, so nothing arrives as a surprise. */
+function firstReminderHtml(alerts: NextAlert[], defaults: Set<LaneId>) {
+  if (!alerts.length) return '';
+  const when = (a: NextAlert) => `${esc(alertName(a))} at ${duration(a.ms / 1000)}`;
+  const [first, ...rest] = alerts;
+  const note = defaults.has(first.lane) ? ' (a default interval you can change in Settings)' : '';
+  return `First reminder: <strong>${esc(alertName(first))}</strong> after ${duration(first.ms / 1000)}${note}${rest.length ? `, then ${rest.map(when).join(', ')}` : ''}.`;
 }
 
 function timeline(phases: Phase[]) {
@@ -103,6 +121,11 @@ export function renderToday(app: AppCtx) {
   return `<section class="view today">
     ${!running ? `<p class="intro">Start when you sit down to work. ergo reminds you to rest your eyes and change position, and keeps a private record in this browser.</p>` : ''}
     <div class="controls">${controls}</div>
+    ${
+      !running
+        ? `<p class="next-up" data-bind="first-reminder">${firstReminderHtml(firstAlerts(app.ctrl.lanes()), new Set<LaneId>(['posture']))}</p>`
+        : `<p class="next-up" data-bind="next-up" aria-live="off" ${paused ? 'hidden' : ''}>${nextUpHtml(nextAlerts(app.ctrl.lanes(), session.anchors, app.ctrl.effectiveNow(now)))}</p>`
+    }
     <p class="paused-note" data-bind="paused" ${paused ? '' : 'hidden'}></p>
     ${
       tracks.length
@@ -219,6 +242,11 @@ export function tickToday(root: HTMLElement, app: AppCtx, now: number) {
     if (!l || anchor == null) continue;
     const ms = untilNext(l.phases, anchor, app.ctrl.effectiveNow(now), 'cue');
     el.textContent = ms === 0 ? 'now' : clock(ms);
+  }
+  const nu = $('[data-bind="next-up"]', root);
+  if (nu) {
+    nu.hidden = session.pausedAt != null;
+    nu.innerHTML = nextUpHtml(nextAlerts(app.ctrl.lanes(), session.anchors, app.ctrl.effectiveNow(now)));
   }
   const p = $('[data-bind="paused"]', root);
   if (p && session.pausedAt) p.textContent = session.pausedUntil ? `Paused until ${timeOfDay(session.pausedUntil)} (${clock(session.pausedUntil - now)})` : 'Paused';

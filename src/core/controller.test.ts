@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { breakLeft, createController, RING_EVERY, RING_MAX, type Effects } from './controller';
+import { breakLeft, createController, firstAlerts, lanesFor, nextAlerts, RING_EVERY, RING_MAX, type Effects } from './controller';
 import { DEFAULT_SESSION, DEFAULT_SETTINGS, mergeSettings } from './storage';
 import { createStore } from './store';
 
@@ -24,6 +24,26 @@ function setup(over: Partial<typeof DEFAULT_SETTINGS> = {}) {
 }
 
 beforeEach(() => localStorage.clear());
+
+describe('next alerts', () => {
+  const defaults = mergeSettings({ ...DEFAULT_SETTINGS });
+  it('defaults: posture first at 15 min, then eye and the stand cue at 20', () => {
+    const a = firstAlerts(lanesFor(defaults));
+    expect(a.map((x) => [x.lane, x.ms / MIN])).toEqual([['posture', 15], ['eye', 20], ['body', 20]]);
+  });
+  it('counts down from the anchors and moves on once a cue has fired', () => {
+    const ls = lanesFor(defaults);
+    const anchors = { eye: T0, body: T0, posture: T0 };
+    expect(nextAlerts(ls, anchors, T0 + 10 * MIN)[0]).toMatchObject({ lane: 'posture', ms: 5 * MIN });
+    // At 16 min the posture cue has passed; the cycle is 15m15s, so the next cue is at 30m15s.
+    const later = nextAlerts(ls, anchors, T0 + 16 * MIN);
+    expect(later[0]).toMatchObject({ lane: 'eye', ms: 4 * MIN });
+    expect(later.find((x) => x.lane === 'posture')!.ms).toBe(14 * MIN + 15_000);
+  });
+  it('skips lanes with no anchor', () => {
+    expect(nextAlerts(lanesFor(defaults), {}, T0)).toEqual([]);
+  });
+});
 
 describe('controller', () => {
   it('starts an eye break at 20 min and logs it done when it runs out (honor system)', () => {
@@ -65,6 +85,18 @@ describe('controller', () => {
     const eye = ctrl.stateOf('eye', T0 + 28 * MIN)!;
     expect(eye.phase.kind).toBe('work');
     expect(eye.remaining).toBe(30 * MIN);
+  });
+
+  it('an auto-finished body break reschedules the eye chimes (no stale chime)', () => {
+    const { ctrl, fx, run } = setup();
+    ctrl.start(T0);
+    run(1000, 5 * MIN);
+    ctrl.breakNow('body', T0 + 5 * MIN);
+    run(5 * MIN + 1000, 7 * MIN + 2000);
+    const last = (fx.tones as ReturnType<typeof vi.fn>).mock.lastCall![0] as { at: number; tone: string }[];
+    const eyeBreaks = last.filter((e) => e.tone === 'eye').map((e) => e.at);
+    expect(eyeBreaks).not.toContain(T0 + 20 * MIN);
+    expect(eyeBreaks).toContain(T0 + 27 * MIN);
   });
 
   it('snooze pushes the break back and logs a snooze', () => {

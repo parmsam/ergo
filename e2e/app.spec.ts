@@ -265,3 +265,12 @@ test('ring until I respond: the break waits for Start, then counts down', async 
   await dialog.getByRole('button', { name: /Done/ }).click();
   await expect(dialog).toBeHidden({ timeout: 4000 });
 });
+
+test('Today says when the first reminder comes, then counts down to it', async ({ page }) => {
+  await open(page);
+  await expect(page.getByText(/First reminder: Posture reset after 15m/)).toBeVisible();
+  await page.getByRole('button', { name: 'Start reminders' }).click();
+  await expect(page.getByText(/Next up: Posture reset in 15:00/)).toBeVisible();
+  await page.clock.fastForward(60_000);
+  await expect(page.getByText(/Next up: Posture reset in 14:/)).toBeVisible();
+});

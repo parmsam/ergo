@@ -1,4 +1,4 @@
-import { anchorFor, anchorStartingIn, phaseAt, phaseKey, upcoming, type PhaseState } from './engine';
+import { anchorFor, anchorStartingIn, cycleMs, phaseAt, phaseKey, upcoming, type PhaseState } from './engine';
 import { nudgePhases, ruleFor, trackOn } from './rules';
 import { dayKey, skipRun } from './stats';
 import type { Store } from './store';
@@ -59,6 +59,31 @@ export function lanesFor(s: Settings): Lane[] {
     if (s.nudges[id].on) out.push({ id, rule: id, phases: nudgePhases(id, s.nudges[id].everyMin) });
   }
   return out;
+}
+
+export interface NextAlert {
+  lane: LaneId;
+  /** The cue or break that will fire. */
+  phase: Phase;
+  /** Ms from `now`. */
+  ms: number;
+}
+
+/** When each lane will next cue or break you, soonest first. Lanes without an anchor are skipped. */
+export function nextAlerts(ls: Lane[], anchors: Partial<Record<LaneId, number>>, now: number): NextAlert[] {
+  const out: NextAlert[] = [];
+  for (const l of ls) {
+    const anchor = anchors[l.id];
+    if (anchor == null) continue;
+    const u = upcoming(l.phases, anchor, now, now + cycleMs(l.phases)).find((x) => x.phase.kind !== 'work');
+    if (u) out.push({ lane: l.id, phase: u.phase, ms: u.at - now });
+  }
+  return out.sort((a, b) => a.ms - b.ms);
+}
+
+/** What the first alert of each lane will be if you start right now. */
+export function firstAlerts(ls: Lane[]): NextAlert[] {
+  return nextAlerts(ls, Object.fromEntries(ls.map((l) => [l.id, 0])), 0);
 }
 
 const TONE_HORIZON = 30 * 60_000;
@@ -194,6 +219,8 @@ export function createController(store: Store, fx: Effects) {
       setAnchors({ eye: anchorFor(eye.phases, now, 0) });
       const st = stateOf('eye', now);
       if (st) prev.set('eye', phaseKey(st));
+      // The eye chimes queued on the audio clock were for the old anchor.
+      scheduleTones(now);
     }
   }
 
