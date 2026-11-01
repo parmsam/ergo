@@ -26,6 +26,7 @@ export const DEFAULT_SETTINGS: Settings = {
   overlay: 'full',
   theme: 'auto',
   autoStart: false,
+  showNextUp: true,
   goalPct: 70,
   sitBudgetH: 8,
 };

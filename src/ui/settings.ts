@@ -77,6 +77,7 @@ export function renderSettings(app: AppCtx) {
       <div class="section-title"><h2>App</h2></div>
       <div class="form">
         ${field('Theme', '', `<select data-sel="theme"><option value="auto" ${s.theme === 'auto' ? 'selected' : ''}>Match system</option><option value="dark" ${s.theme === 'dark' ? 'selected' : ''}>Dark</option><option value="light" ${s.theme === 'light' ? 'selected' : ''}>Light</option></select>`)}
+        ${field('Next up line', 'Show what fires first under the Start and Pause buttons on Today', sw('showNextUp', s.showNextUp))}
         ${field('Start on open', 'Begin reminders automatically when you open ergo', sw('autoStart', s.autoStart))}
       </div>
       <div class="btn-row">

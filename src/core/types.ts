@@ -67,6 +67,8 @@ export interface Settings {
   overlay: 'full' | 'card';
   theme: 'auto' | 'dark' | 'light';
   autoStart: boolean;
+  /** The "Next up" / "First reminder" line on Today. */
+  showNextUp: boolean;
   /** Daily adherence goal, used for streaks. */
   goalPct: number;
   /** Daily sitting budget in hours (Canadian 24-Hour Movement Guidelines: 8 h or less). 0 hides it. */

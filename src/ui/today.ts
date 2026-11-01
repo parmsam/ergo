@@ -158,9 +158,11 @@ export function renderToday(app: AppCtx) {
     ${!running ? `<p class="intro">Start when you sit down to work. ergo reminds you to rest your eyes and change position, and keeps a private record in this browser.</p>` : ''}
     <div class="controls">${controls}</div>
     ${
-      !running
-        ? `<p class="next-up" data-bind="first-reminder">${firstReminderHtml(firstAlerts(app.ctrl.lanes()), new Set<LaneId>(['posture']))}</p>`
-        : `<p class="next-up" data-bind="next-up" aria-live="off" ${paused ? 'hidden' : ''}>${nextUpHtml(nextAlerts(app.ctrl.lanes(), session.anchors, app.ctrl.effectiveNow(now)))}</p>`
+      !settings.showNextUp
+        ? ''
+        : !running
+          ? `<p class="next-up" data-bind="first-reminder">${firstReminderHtml(firstAlerts(app.ctrl.lanes()), new Set<LaneId>(['posture']))}</p>`
+          : `<p class="next-up" data-bind="next-up" aria-live="off" ${paused ? 'hidden' : ''}>${nextUpHtml(nextAlerts(app.ctrl.lanes(), session.anchors, app.ctrl.effectiveNow(now)))}</p>`
     }
     <p class="paused-note" data-bind="paused" ${paused ? '' : 'hidden'}></p>
     ${

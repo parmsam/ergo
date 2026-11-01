@@ -294,3 +294,15 @@ test('Next up names only the soonest alert, and joins ones that land together', 
   await page.locator('[data-nudge="posture"]').click();
   await expect(page.getByText('Next up: Eye break and Stand up in 20:00')).toBeVisible();
 });
+
+test('the Next up line can be switched off in Settings', async ({ page }) => {
+  await open(page);
+  await expect(page.getByText(/First reminder:/)).toBeVisible();
+  await page.getByRole('link', { name: 'Settings' }).click();
+  await page.getByRole('checkbox', { name: /Next up line/ }).uncheck();
+  await page.getByRole('link', { name: 'Today' }).click();
+  await expect(page.getByText(/First reminder:/)).toHaveCount(0);
+  await page.getByRole('button', { name: 'Start reminders' }).click();
+  await expect(page.getByText(/Next up:/)).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Next hour' })).toBeVisible();
+});
