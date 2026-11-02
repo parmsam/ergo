@@ -2,6 +2,11 @@
 
 All notable changes to ergo. Versions follow [semver](https://semver.org); the version in `package.json` is shown in the app header and in Settings → About.
 
+## [0.10.1] - 2026-11-01
+
+### Fixed
+- The first-run header text on Today was four long, ragged blocks around Start. The copy is shorter, lines wrap evenly, and "Allow notifications" looks like a link.
+
 ## [0.10.0] - 2026-11-01
 
 ### Changed

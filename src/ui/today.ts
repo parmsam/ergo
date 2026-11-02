@@ -47,8 +47,8 @@ function firstReminderHtml(alerts: NextAlert[], defaults: Set<LaneId>) {
   const names = (g: NextAlert[]) => g.map((a) => `<strong>${esc(alertName(a))}</strong>`).join(' and ');
   const [first, ...rest] = groups;
   const isDefault = first.some((a) => defaults.has(a.lane));
-  const tail = rest.length ? ` ${rest.map((g) => `${names(g)} at ${duration(g[0].ms / 1000)}`).join(', ')} follow.` : '';
-  return `First reminder: ${names(first)} after ${duration(first[0].ms / 1000)}${isDefault ? ' (default; change it in Settings)' : ''}.${tail}`;
+  const tail = rest.length ? ` Then ${rest.map((g) => `${names(g)} at ${duration(g[0].ms / 1000)}`).join(', ')}.` : '';
+  return `First reminder: ${names(first)} after ${duration(first[0].ms / 1000)}${isDefault ? ' (default interval)' : ''}.${tail}`;
 }
 
 const WINDOW = 60 * 60_000;
@@ -165,14 +165,14 @@ export function renderToday(app: AppCtx) {
   return `<section class="view today">
     ${
       !running
-        ? `<div class="intro"><p>Start when you sit down to work. ergo runs two timers: one reminds you to <strong>look away from the screen</strong>, the other to <strong>stand and move</strong>.</p>
-      <p class="intro-fine">Keep ergo open in a tab or installed as an app, since reminders only fire while it's running. Nothing leaves this browser.</p></div>`
+        ? `<div class="intro"><p>Start when you sit down to work. ergo runs two timers: one to <strong>look away from the screen</strong>, one to <strong>stand and move</strong>.</p>
+      <p class="intro-fine">Reminders only fire while ergo is open. Nothing leaves this browser.</p></div>`
         : ''
     }
     <div class="controls">${controls}</div>
     ${
       !running && notifySupported() && Notification.permission === 'default'
-        ? `<p class="notify-ask">Working in other apps? <button class="rule-link" data-act="allow-notify-today">Allow notifications</button> so breaks reach you there. Your browser will ask once.</p>`
+        ? `<p class="notify-ask">Working in other apps? <button class="rule-link" data-act="allow-notify-today">Allow notifications</button></p>`
         : ''
     }
     ${

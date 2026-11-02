@@ -269,7 +269,7 @@ test('ring until I respond: the break waits for Start, then counts down', async 
 
 test('Today says when the first reminder comes, then counts down to it', async ({ page }) => {
   await open(page);
-  await expect(page.getByText(/First reminder: Posture reset after 15m \(default; change it in Settings\)\. Eye break and Stand up at 20m follow\./)).toBeVisible();
+  await expect(page.getByText(/First reminder: Posture reset after 15m \(default interval\)\. Then Eye break and Stand up at 20m\./)).toBeVisible();
   await page.getByRole('button', { name: 'Start reminders' }).click();
   await expect(page.getByText(/Next up: Posture reset in 15:00/)).toBeVisible();
   await page.clock.fastForward(60_000);
@@ -311,7 +311,7 @@ test('the Next up line can be switched off in Settings', async ({ page }) => {
 test('first run explains itself and hides empty stats', async ({ page }) => {
   await open(page, quiet);
   await expect(page.locator('.intro')).toContainText('look away from the screen');
-  await expect(page.locator('.intro')).toContainText('only fire while it');
+  await expect(page.locator('.intro')).toContainText('only fire while ergo is open');
   await expect(page.locator('[data-bind="status"]')).toHaveText('Not started');
   await expect(page.getByRole('heading', { name: 'Today', exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Break now' }).first()).toBeDisabled();

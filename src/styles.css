@@ -813,6 +813,11 @@ button.top-link {
   margin: 0 auto;
   color: var(--muted);
 }
+.intro p,
+.notify-ask,
+.next-up {
+  text-wrap: balance;
+}
 .intro p {
   margin: 0 0 6px;
 }
@@ -826,6 +831,11 @@ button.top-link {
   max-width: 460px;
   font-size: 0.85rem;
   color: var(--muted);
+}
+.notify-ask .rule-link {
+  color: var(--eye);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 .intro .intro-fine {
   font-size: 0.85rem;
