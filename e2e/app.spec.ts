@@ -310,8 +310,8 @@ test('the Next up line can be switched off in Settings', async ({ page }) => {
 
 test('first run explains itself and hides empty stats', async ({ page }) => {
   await open(page, quiet);
-  await expect(page.locator('.intro')).toContainText('look away from the screen');
-  await expect(page.locator('.intro')).toContainText('only fire while ergo is open');
+  await expect(page.locator('[data-hint="intro"]')).toContainText('look away from the screen');
+  await expect(page.locator('[data-hint="intro"]')).toContainText('only fire while ergo is open');
   await expect(page.locator('[data-bind="status"]')).toHaveText('Not started');
   await expect(page.getByRole('heading', { name: 'Today', exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Break now' }).first()).toBeDisabled();
@@ -327,4 +327,21 @@ test('first run offers notifications with context, before Start', async ({ page 
   await expect(page.locator('.notify-ask')).toContainText('Working in other apps?');
   await page.getByRole('button', { name: 'Start reminders' }).click();
   await expect(page.locator('.notify-ask')).toHaveCount(0);
+});
+
+test('the getting-started boxes can be closed, stay closed, and come back from Settings', async ({ page }) => {
+  await open(page, quiet);
+  await expect(page.locator('[data-hint="intro"]')).toBeVisible();
+  await expect(page.locator('[data-hint="first"]')).toContainText('First reminder:');
+  await page.locator('[data-hint="intro"]').getByRole('button', { name: 'Dismiss tip' }).click();
+  await expect(page.locator('[data-hint="intro"]')).toHaveCount(0);
+  await expect(page.locator('[data-hint="first"]')).toBeVisible();
+  await page.locator('[data-hint="first"]').getByRole('button', { name: 'Dismiss tip' }).click();
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Start reminders' })).toBeVisible();
+  await expect(page.locator('[data-hint]')).toHaveCount(0);
+  await page.getByRole('link', { name: 'Settings' }).click();
+  await page.getByRole('button', { name: 'Show tips again' }).click();
+  await page.getByRole('link', { name: 'Today' }).click();
+  await expect(page.locator('[data-hint]')).toHaveCount(2);
 });

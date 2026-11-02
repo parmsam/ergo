@@ -27,6 +27,8 @@ export const DEFAULT_SETTINGS: Settings = {
   theme: 'auto',
   autoStart: false,
   showNextUp: true,
+  introDismissed: false,
+  firstReminderDismissed: false,
   goalPct: 70,
   sitBudgetH: 8,
 };

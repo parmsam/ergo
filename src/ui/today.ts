@@ -92,6 +92,10 @@ function timeline(phases: Phase[]) {
     <div class="timeline-legend">${phases.map((p) => `<span>${esc(p.label)} ${short(p.sec)}</span>`).join('')}</div>`;
 }
 
+/** A closable info box. `id` is the data-hint key that bindToday wires to the dismiss setting. */
+const hintBox = (id: 'intro' | 'first', body: string) =>
+  `<aside class="hint" data-hint="${id}"><span class="hint-icon">${icons.info}</span><div class="hint-body">${body}</div><button class="hint-x" data-dismiss="${id}" aria-label="Dismiss tip">${icons.x}</button></aside>`;
+
 export function renderToday(app: AppCtx) {
   const { settings, session, log, days, checklist } = app.store.get();
   const running = session.running;
@@ -164,9 +168,8 @@ export function renderToday(app: AppCtx) {
 
   return `<section class="view today">
     ${
-      !running
-        ? `<div class="intro"><p>Start when you sit down to work. ergo runs two timers: one to <strong>look away from the screen</strong>, one to <strong>stand and move</strong>.</p>
-      <p class="intro-fine">Reminders only fire while ergo is open. Nothing leaves this browser.</p></div>`
+      !running && !settings.introDismissed
+        ? hintBox('intro', `<p>Start when you sit down to work. ergo runs two timers: one to <strong>look away from the screen</strong>, one to <strong>stand and move</strong>.</p><p class="hint-fine">Reminders only fire while ergo is open. Nothing leaves this browser.</p>`)
         : ''
     }
     <div class="controls">${controls}</div>
@@ -179,7 +182,9 @@ export function renderToday(app: AppCtx) {
       !settings.showNextUp
         ? ''
         : !running
-          ? `<p class="next-up" data-bind="first-reminder">${firstReminderHtml(firstAlerts(app.ctrl.lanes()), new Set<LaneId>(['posture']))}</p>`
+          ? settings.firstReminderDismissed
+            ? ''
+            : hintBox('first', firstReminderHtml(firstAlerts(app.ctrl.lanes()), new Set<LaneId>(['posture'])))
           : `<p class="next-up" data-bind="next-up" aria-live="off" ${paused ? 'hidden' : ''}>${nextUpHtml(nextAlerts(app.ctrl.lanes(), session.anchors, app.ctrl.effectiveNow(now)))}</p>`
     }
     <p class="paused-note" data-bind="paused" ${paused ? '' : 'hidden'}></p>
@@ -231,6 +236,14 @@ export function renderToday(app: AppCtx) {
 
 export function bindToday(root: HTMLElement, app: AppCtx) {
   root.querySelector('[data-act="start"]')?.addEventListener('click', () => app.actions.start());
+  root.querySelectorAll<HTMLElement>('[data-dismiss]').forEach((b) =>
+    b.addEventListener('click', () =>
+      app.updateSettings((s) => {
+        if (b.dataset.dismiss === 'intro') s.introDismissed = true;
+        else s.firstReminderDismissed = true;
+      }),
+    ),
+  );
   root.querySelector('[data-act="allow-notify-today"]')?.addEventListener('click', async () => {
     const r = await requestNotify();
     if (r === 'granted') app.updateSettings((s) => (s.notify = true));

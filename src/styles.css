@@ -807,23 +807,63 @@ button.top-link {
   color: var(--muted);
   font-size: 0.85rem;
 }
-.intro {
-  text-align: center;
-  max-width: 540px;
-  margin: 0 auto;
+.hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: 560px;
+  margin: 12px auto 0;
+  padding: 12px 8px 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
   color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.45;
 }
-.intro p,
-.notify-ask,
-.next-up {
-  text-wrap: balance;
+.hint-icon {
+  flex: none;
+  margin-top: 1px;
+  color: var(--eye);
 }
-.intro p {
-  margin: 0 0 6px;
+.hint-body {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
 }
-.intro strong {
+.hint-body p {
+  margin: 0;
+}
+.hint-body p + p {
+  margin-top: 4px;
+}
+.hint-body strong {
   color: var(--text);
   font-weight: 500;
+}
+.hint-fine {
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+.hint-x {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.hint-x:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.hint-x .icon {
+  width: 16px;
+  height: 16px;
 }
 .notify-ask {
   text-align: center;
@@ -836,10 +876,6 @@ button.top-link {
   color: var(--eye);
   text-decoration: underline;
   text-underline-offset: 2px;
-}
-.intro .intro-fine {
-  font-size: 0.85rem;
-  opacity: 0.85;
 }
 
 /* Nudges + tiles */

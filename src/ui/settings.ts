@@ -83,6 +83,7 @@ export function renderSettings(app: AppCtx) {
       <div class="btn-row">
         <button class="btn sm" data-act="export">Export backup</button>
         <label class="btn sm">Import backup<input type="file" accept="application/json" data-act="import" hidden/></label>
+        <button class="btn sm" data-act="show-tips" ${s.introDismissed || s.firstReminderDismissed ? '' : 'disabled'}>Show tips again</button>
         <button class="btn sm ghost" data-act="reset" style="color:var(--bad)">Erase history</button>
       </div>
     </div>
@@ -146,6 +147,10 @@ export function bindSettings(root: HTMLElement, app: AppCtx) {
     } catch (err) {
       toast(`Couldn’t import: ${(err as Error).message}`, { icon: 'x' });
     }
+  });
+  root.querySelector('[data-act="show-tips"]')?.addEventListener('click', () => {
+    app.updateSettings((s) => ((s.introDismissed = false), (s.firstReminderDismissed = false)));
+    toast('Tips are back on Today.', { icon: 'check' });
   });
   root.querySelector('[data-act="reset"]')?.addEventListener('click', () => {
     if (!confirm('Erase all break history and screen-time totals? Settings are kept.')) return;

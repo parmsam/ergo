@@ -69,6 +69,9 @@ export interface Settings {
   autoStart: boolean;
   /** The "Next up" / "First reminder" line on Today. */
   showNextUp: boolean;
+  /** Getting-started boxes on Today that the user closed. */
+  introDismissed: boolean;
+  firstReminderDismissed: boolean;
   /** Daily adherence goal, used for streaks. */
   goalPct: number;
   /** Daily sitting budget in hours (Canadian 24-Hour Movement Guidelines: 8 h or less). 0 hides it. */

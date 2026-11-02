@@ -2,6 +2,11 @@
 
 All notable changes to ergo. Versions follow [semver](https://semver.org); the version in `package.json` is shown in the app header and in Settings → About.
 
+## [0.11.0] - 2026-11-01
+
+### Changed
+- The getting-started text and the "First reminder" line on Today are now info boxes with a close button. Closing one is remembered; Settings → App → **Show tips again** brings them back.
+
 ## [0.10.1] - 2026-11-01
 
 ### Fixed
